@@ -1,0 +1,68 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gardener-extension-os-gardenlinux
+  labels:
+    app.kubernetes.io/name: gardener-extension-os-gardenlinux
+    helm.sh/chart: gardener-extension-os-gardenlinux
+    app.kubernetes.io/instance: {{ .Release.Name }}
+rules:
+- apiGroups:
+  - extensions.gardener.cloud
+  resources:
+  - operatingsystemconfigs
+  - operatingsystemconfigs/status
+  verbs:
+  - get
+  - list
+  - watch
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  - secrets/finalizers
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - events
+  verbs:
+  - create
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  resourceNames:
+  - gardenlinux-leader-election
+  verbs:
+  - get
+  - watch
+  - update
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: gardener-extension-os-gardenlinux
+  labels:
+    app.kubernetes.io/name: gardener-extension-os-gardenlinux
+    helm.sh/chart: gardener-extension-os-gardenlinux
+    app.kubernetes.io/instance: {{ .Release.Name }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: gardener-extension-os-gardenlinux
+subjects:
+- kind: ServiceAccount
+  name: gardener-extension-os-gardenlinux
+  namespace: {{ .Release.Namespace }}
