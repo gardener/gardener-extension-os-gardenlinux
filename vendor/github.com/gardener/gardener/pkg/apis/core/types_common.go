@@ -81,7 +81,7 @@ type LastOperation struct {
 	// Last time the operation state transitioned from one to another.
 	LastUpdateTime metav1.Time
 	// The progress in percentage (0-100) of the last operation.
-	Progress int
+	Progress int32
 	// Status of the last operation, one of Aborted, Processing, Succeeded, Error, Failed.
 	State LastOperationState
 	// Type of the last operation, one of Create, Reconcile, Delete.
@@ -102,9 +102,4 @@ const (
 	// GardenerName is the value in a Garden resource's `.metadata.finalizers[]` array on which the Gardener will react
 	// when performing a delete request on a resource.
 	GardenerName = "gardener"
-
-	// ExternalGardenerName is the value in a Kubernetes core resources `.metadata.finalizers[]` array on which the
-	// Gardener will react when performing a delete request on a resource.
-	// TODO: migrate this to gardener.cloud
-	ExternalGardenerName = "garden.sapcloud.io/gardener"
 )
