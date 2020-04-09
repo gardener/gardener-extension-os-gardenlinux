@@ -24,8 +24,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Name is the name of the Garden Linux OS
-const osName = "gardenlinux"
+var (
+	ctrlName = "gardenlinux"
+	osTypes  = []string{"gardenlinux"}
+)
 
 // NewControllerCommand returns a new Command with a new Generator
 func NewControllerCommand(ctx context.Context) *cobra.Command {
@@ -34,7 +36,7 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 		cmd.LogErrAndExit(nil, "Could not create Generator")
 	}
 
-	cmd := app.NewControllerCommand(ctx, osName, g)
+	cmd := app.NewControllerCommand(ctx, ctrlName, osTypes, g)
 
 	return cmd
 }
