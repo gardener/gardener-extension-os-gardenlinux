@@ -26,6 +26,8 @@ mkdir -p '{{ $unit.DropIns.Path }}'
 {{- end }}
 {{- end }}
 
+grep -sq "^nfsd$" /etc/modules || echo "nfsd" >>/etc/modules
+modprobe nfsd
 systemctl daemon-reload
 {{ if .Bootstrap }}
 systemctl enable docker && systemctl restart docker
