@@ -15,6 +15,8 @@ cat << EOF | base64 -d > '/etc/systemd/system/docker.service.d/10-docker-opts.co
 b3ZlcnJpZGU=
 EOF
 
+grep -sq "^nfsd$" /etc/modules || echo "nfsd" >>/etc/modules
+modprobe nfsd
 systemctl daemon-reload
 
 systemctl enable docker && systemctl restart docker
