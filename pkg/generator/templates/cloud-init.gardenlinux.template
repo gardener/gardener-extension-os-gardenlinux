@@ -1,12 +1,12 @@
 #!/bin/bash
 
-{{ define "put-content" -}}
+{{- define "put-content" -}}
 cat << EOF | base64 -d > '{{ .Path }}'
 {{ .Content }}
 EOF
 {{- end -}}
 
-{{ if isContainerDEnabled .CRI -}}
+{{ if and (isContainerDEnabled .CRI) .Bootstrap }}
 mkdir -p /etc/systemd/system/containerd.service.d
 cat <<EOF > /etc/systemd/system/containerd.service.d/11-exec_config.conf
 [Service]
@@ -14,17 +14,17 @@ ExecStart=
 ExecStart=/usr/bin/containerd --config=/etc/containerd/config.toml
 EOF
 chmod 0644 /etc/systemd/system/containerd.service.d/11-exec_config.conf
-{{ end -}}
+{{- end }}
 
-{{- range $_, $file := .Files -}}
+{{ range $_, $file := .Files -}}
 mkdir -p '{{ $file.Dirname }}'
 {{ template "put-content" $file }}
-{{- if $file.Permissions }}
+{{ if $file.Permissions -}}
 chmod '{{ $file.Permissions }}' '{{ $file.Path }}'
 {{ end }}
 {{ end }}
 
-{{- range $_, $unit := .Units -}}
+{{ range $_, $unit := .Units -}}
 {{ if $unit.Content -}}
 {{ template "put-content" $unit }}
 {{- end }}
@@ -39,15 +39,13 @@ mkdir -p '{{ $unit.DropIns.Path }}'
 grep -sq "^nfsd$" /etc/modules || echo "nfsd" >>/etc/modules
 modprobe nfsd
 systemctl daemon-reload
-{{ if .Bootstrap }}
-{{ if isContainerDEnabled .CRI -}}
+{{- if .Bootstrap }}
+{{- if isContainerDEnabled .CRI }}
 systemctl enable containerd && systemctl restart containerd
-{{- else -}}
+{{- end }}
 systemctl enable docker && systemctl restart docker
-{{ end -}}
-{{ end -}}
+{{- end }}
 
-
-{{ range $_, $unit := .Units -}}
+{{- range $_, $unit := .Units }}
 systemctl enable '{{ $unit.Name }}' && systemctl restart '{{ $unit.Name }}'
-{{ end }}
+{{- end }}

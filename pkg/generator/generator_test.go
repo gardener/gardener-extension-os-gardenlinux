@@ -25,6 +25,57 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+var (
+	permissions = int32(0644)
+	unit1       = "unit1"
+	unit2       = "unit2"
+	dropin      = "dropin"
+	filePath    = "/var/lib/kubelet/ca.crt"
+
+	unitContent = []byte(`[Unit]
+Description=test content
+[Install]
+WantedBy=multi-user.target
+[Service]
+Restart=always`)
+	dropinContent = []byte(`[Service]
+Environment="DOCKER_OPTS=--log-opt max-size=60m --log-opt max-file=3"`)
+
+	fileContent = []byte(`secretRef:
+name: default-token-d9nzl
+dataKey: token`)
+
+	criConfig = v1alpha1.CRIConfig{
+		Name: v1alpha1.CRINameContainerD,
+	}
+
+	osc = commongen.OperatingSystemConfig{
+		Units: []*commongen.Unit{
+			{
+				Name:    unit1,
+				Content: unitContent,
+			},
+			{
+				Name:    unit2,
+				Content: unitContent,
+				DropIns: []*commongen.DropIn{
+					{
+						Name:    dropin,
+						Content: dropinContent,
+					},
+				},
+			},
+		},
+		Files: []*commongen.File{
+			{
+				Path:        filePath,
+				Content:     fileContent,
+				Permissions: &permissions,
+			},
+		},
+	}
+)
+
 var _ = Describe("Garden Linux OS Generator Test", func() {
 
 	Describe("Conformance Tests", func() {
@@ -32,16 +83,49 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 		g := gardenlinux_generator.CloudInitGenerator()
 		test.DescribeTest(gardenlinux_generator.CloudInitGenerator(), box)()
 
-		It("should render correctly with Containerd enabled", func() {
-			expectedCloudInit, err := box.Find("cloud-init-containerd")
+		It("[docker] [bootstrap] should render correctly ", func() {
+			expectedCloudInit, err := box.Find("docker-bootstrap")
 			Expect(err).NotTo(HaveOccurred())
 
-			cloudInit, _, err := g.Generate(
-				&commongen.OperatingSystemConfig{
-					CRI: &v1alpha1.CRIConfig{
-						Name: v1alpha1.CRINameContainerD,
-					},
-				})
+			osc.Bootstrap = true
+			osc.CRI = nil
+			cloudInit, _, err := g.Generate(&osc)
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(cloudInit).To(Equal(expectedCloudInit))
+		})
+
+		It("[docker] [reconcile] should render correctly", func() {
+			expectedCloudInit, err := box.Find("docker-reconcile")
+			Expect(err).NotTo(HaveOccurred())
+
+			osc.Bootstrap = false
+			osc.CRI = nil
+			cloudInit, _, err := g.Generate(&osc)
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(cloudInit).To(Equal(expectedCloudInit))
+		})
+
+		It("[containerd] [bootstrap] should render correctly", func() {
+			expectedCloudInit, err := box.Find("containerd-bootstrap")
+			Expect(err).NotTo(HaveOccurred())
+
+			osc.Bootstrap = true
+			osc.CRI = &criConfig
+			cloudInit, _, err := g.Generate(&osc)
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(cloudInit).To(Equal(expectedCloudInit))
+		})
+
+		It("[containerd] [reconcile] should render correctly bootstrap", func() {
+			expectedCloudInit, err := box.Find("containerd-reconcile")
+			Expect(err).NotTo(HaveOccurred())
+
+			osc.Bootstrap = false
+			osc.CRI = &criConfig
+			cloudInit, _, err := g.Generate(&osc)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(cloudInit).To(Equal(expectedCloudInit))

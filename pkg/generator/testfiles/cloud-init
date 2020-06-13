@@ -6,6 +6,8 @@ YmFy
 EOF
 chmod '0600' '/foo'
 
+
+
 cat << EOF | base64 -d > '/etc/systemd/system/docker.service'
 dW5pdA==
 EOF
@@ -18,7 +20,5 @@ EOF
 grep -sq "^nfsd$" /etc/modules || echo "nfsd" >>/etc/modules
 modprobe nfsd
 systemctl daemon-reload
-
 systemctl enable docker && systemctl restart docker
 systemctl enable 'docker.service' && systemctl restart 'docker.service'
-
