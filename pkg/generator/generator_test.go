@@ -50,6 +50,11 @@ dataKey: token`)
 	}
 
 	osc = commongen.OperatingSystemConfig{
+		Object: &v1alpha1.OperatingSystemConfig{
+			Spec: v1alpha1.OperatingSystemConfigSpec{
+				Purpose: v1alpha1.OperatingSystemConfigPurposeProvision,
+			},
+		},
 		Units: []*commongen.Unit{
 			{
 				Name:    unit1,
@@ -88,6 +93,7 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			osc.Bootstrap = true
+			osc.Object.Spec.Purpose = v1alpha1.OperatingSystemConfigPurposeProvision
 			osc.CRI = nil
 			cloudInit, _, err := g.Generate(&osc)
 
@@ -100,6 +106,7 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			osc.Bootstrap = false
+			osc.Object.Spec.Purpose = v1alpha1.OperatingSystemConfigPurposeReconcile
 			osc.CRI = nil
 			cloudInit, _, err := g.Generate(&osc)
 
@@ -112,6 +119,7 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			osc.Bootstrap = true
+			osc.Object.Spec.Purpose = v1alpha1.OperatingSystemConfigPurposeProvision
 			osc.CRI = &criConfig
 			cloudInit, _, err := g.Generate(&osc)
 
@@ -124,6 +132,7 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			osc.Bootstrap = false
+			osc.Object.Spec.Purpose = v1alpha1.OperatingSystemConfigPurposeReconcile
 			osc.CRI = &criConfig
 			cloudInit, _, err := g.Generate(&osc)
 

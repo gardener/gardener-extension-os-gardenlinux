@@ -14,7 +14,7 @@
 
 EXTENSION_PREFIX            := gardener-extension
 NAME                        := os-gardenlinux
-REGISTRY                    := eu.gcr.io/gardener-project
+REGISTRY                    := eu.gcr.io/gardener-project/gardener
 IMAGE_PREFIX                := $(REGISTRY)/extensions
 REPO_ROOT                   := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 HACK_DIR                    := $(REPO_ROOT)/hack
@@ -33,7 +33,9 @@ start:
 		-mod=vendor \
 		-ldflags $(LD_FLAGS) \
 		./cmd/$(EXTENSION_PREFIX)-$(NAME) \
-		--leader-election=$(LEADER_ELECTION)
+		--leader-election=$(LEADER_ELECTION) \
+		--ignore-operation-annotation=$(IGNORE_OPERATION_ANNOTATION)
+
 #################################################################
 # Rules related to binary build, Docker image build and release #
 #################################################################
@@ -60,6 +62,7 @@ install-requirements:
 	@go install -mod=vendor $(REPO_ROOT)/vendor/github.com/gobuffalo/packr/v2/packr2
 	@go install -mod=vendor $(REPO_ROOT)/vendor/github.com/onsi/ginkgo/ginkgo
 	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/install-requirements.sh
+	@$(REPO_ROOT)/hack/update-github-templates.sh
 
 .PHONY: revendor
 revendor:

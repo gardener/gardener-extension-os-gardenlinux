@@ -17,9 +17,11 @@ package core
 import (
 	"time"
 
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -80,6 +82,16 @@ type ShootSpec struct {
 	SecretBindingName string
 	// SeedName is the name of the seed cluster that runs the control plane of the Shoot.
 	SeedName *string
+	// SeedSelector is an optional selector which must match a seed's labels for the shoot to be scheduled on that seed.
+	SeedSelector *metav1.LabelSelector
+	// Resources holds a list of named resource references that can be referred to in extension configs by their names.
+	Resources []NamedResourceReference
+	// Tolerations contains the tolerations for taints on seed clusters.
+	Tolerations []Toleration
+}
+
+func (s *Shoot) GetProviderType() string {
+	return s.Spec.Provider.Type
 }
 
 // ShootStatus holds the most recently observed status of the Shoot cluster.
@@ -209,7 +221,21 @@ type Extension struct {
 	// Type is the type of the extension resource.
 	Type string
 	// ProviderConfig is the configuration passed to extension resource.
-	ProviderConfig *ProviderConfig
+	ProviderConfig *runtime.RawExtension
+	// Disabled allows to disable extensions that were marked as 'globally enabled' by Gardener administrators.
+	Disabled *bool
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// NamedResourceReference relevant types                                                        //
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+// NamedResourceReference is a named reference to a resource.
+type NamedResourceReference struct {
+	// Name of the resource reference.
+	Name string
+	// ResourceRef is a reference to a resource.
+	ResourceRef autoscalingv1.CrossVersionObjectReference
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -371,7 +397,7 @@ type AdmissionPlugin struct {
 	// Name is the name of the plugin.
 	Name string
 	// Config is the configuration of the plugin.
-	Config *ProviderConfig
+	Config *runtime.RawExtension
 }
 
 // KubeControllerManagerConfig contains configuration settings for the kube-controller-manager.
@@ -422,6 +448,11 @@ const (
 // KubeSchedulerConfig contains configuration settings for the kube-scheduler.
 type KubeSchedulerConfig struct {
 	KubernetesConfig
+	// KubeMaxPDVols allows to configure the `KUBE_MAX_PD_VOLS` environment variable for the kube-scheduler.
+	// Please find more information here: https://kubernetes.io/docs/concepts/storage/storage-limits/#custom-limits
+	// Note that using this field is considered alpha-/experimental-level and is on your own risk. You should be aware
+	// of all the side-effects and consequences when changing it.
+	KubeMaxPDVols *string
 }
 
 // KubeProxyConfig contains configuration settings for the kube-proxy.
@@ -495,6 +526,8 @@ type KubeletConfig struct {
 	// ImagePullProgressDeadline describes the time limit under which if no pulling progress is made, the image pulling will be cancelled.
 	// Default: 1m
 	ImagePullProgressDeadline *metav1.Duration
+	// FailSwapOn makes the Kubelet fail to start if swap is enabled on the node. (default true).
+	FailSwapOn *bool
 }
 
 // KubeletConfigEviction contains kubelet eviction thresholds supporting either a resource.Quantity or a percentage based value.
@@ -548,7 +581,7 @@ type Networking struct {
 	// Type identifies the type of the networking plugin.
 	Type string
 	// ProviderConfig is the configuration passed to network resource.
-	ProviderConfig *ProviderConfig
+	ProviderConfig *runtime.RawExtension
 	// Pods is the CIDR of the pod network.
 	Pods *string
 	// Nodes is the CIDR of the entire node network.
@@ -575,6 +608,10 @@ type Maintenance struct {
 	AutoUpdate *MaintenanceAutoUpdate
 	// TimeWindow contains information about the time window for maintenance operations.
 	TimeWindow *MaintenanceTimeWindow
+	// ConfineSpecUpdateRollout prevents that changes/updates to the shoot specification will be rolled out immediately.
+	// Instead, they are rolled out during the shoot's maintenance time window. There is one exception that will trigger
+	// an immediate roll out which is changes to the Spec.Hibernation.Enabled field.
+	ConfineSpecUpdateRollout *bool
 }
 
 // MaintenanceAutoUpdate contains information about which constraints should be automatically updated.
@@ -622,10 +659,10 @@ type Provider struct {
 	Type string
 	// ControlPlaneConfig contains the provider-specific control plane config blob. Please look up the concrete
 	// definition in the documentation of your provider extension.
-	ControlPlaneConfig *ProviderConfig
+	ControlPlaneConfig *runtime.RawExtension
 	// InfrastructureConfig contains the provider-specific infrastructure config blob. Please look up the concrete
 	// definition in the documentation of your provider extension.
-	InfrastructureConfig *ProviderConfig
+	InfrastructureConfig *runtime.RawExtension
 	// Workers is a list of worker groups.
 	Workers []Worker
 }
@@ -655,7 +692,7 @@ type Worker struct {
 	// MaxUnavailable is the maximum number of VMs that can be unavailable during an update.
 	MaxUnavailable *intstr.IntOrString
 	// ProviderConfig is the provider-specific configuration for this worker pool.
-	ProviderConfig *ProviderConfig
+	ProviderConfig *runtime.RawExtension
 	// Taints is a list of taints for all the `Node` objects in this worker pool.
 	Taints []corev1.Taint
 	// Volume contains information about the volume type and size.
@@ -690,7 +727,7 @@ type ShootMachineImage struct {
 	// Name is the name of the image.
 	Name string
 	// ProviderConfig is the shoot's individual configuration passed to an extension resource.
-	ProviderConfig *ProviderConfig
+	ProviderConfig *runtime.RawExtension
 	// Version is the version of the shoot's image.
 	// If version is not provided, it will be defaulted to the latest version from the CloudProfile.
 	Version string
@@ -728,7 +765,7 @@ type ContainerRuntime struct {
 	// Type is the type of the Container Runtime.
 	Type string
 	// ProviderConfig is the configuration passed to the ContainerRuntime resource.
-	ProviderConfig *ProviderConfig
+	ProviderConfig *runtime.RawExtension
 }
 
 var (
