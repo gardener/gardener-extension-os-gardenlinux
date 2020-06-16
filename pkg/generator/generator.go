@@ -15,8 +15,6 @@
 package generator
 
 import (
-	"text/template"
-
 	ostemplate "github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/template"
 	"github.com/gobuffalo/packr/v2"
 	"k8s.io/apimachinery/pkg/util/runtime"
@@ -32,7 +30,7 @@ func init() {
 	cloudInitTemplateString, err := box.FindString("cloud-init.gardenlinux.template")
 	runtime.Must(err)
 
-	cloudInitTemplate, err := template.New("cloud-init").Parse(cloudInitTemplateString)
+	cloudInitTemplate, err := ostemplate.NewTemplate("cloud-init").Parse(cloudInitTemplateString)
 	runtime.Must(err)
 	cloudInitGenerator = ostemplate.NewCloudInitGenerator(cloudInitTemplate, ostemplate.DefaultUnitsPath, cmd)
 }

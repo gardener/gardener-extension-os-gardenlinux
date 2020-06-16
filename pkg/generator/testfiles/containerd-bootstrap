@@ -1,0 +1,36 @@
+#!/bin/bash
+mkdir -p /etc/systemd/system/containerd.service.d
+cat <<EOF > /etc/systemd/system/containerd.service.d/11-exec_config.conf
+[Service]
+ExecStart=
+ExecStart=/usr/bin/containerd --config=/etc/containerd/config.toml
+EOF
+chmod 0644 /etc/systemd/system/containerd.service.d/11-exec_config.conf
+
+mkdir -p '/var/lib/kubelet'
+cat << EOF | base64 -d > '/var/lib/kubelet/ca.crt'
+c2VjcmV0UmVmOgpuYW1lOiBkZWZhdWx0LXRva2VuLWQ5bnpsCmRhdGFLZXk6IHRva2Vu
+EOF
+chmod '0644' '/var/lib/kubelet/ca.crt'
+
+
+
+cat << EOF | base64 -d > '/etc/systemd/system/unit1'
+W1VuaXRdCkRlc2NyaXB0aW9uPXRlc3QgY29udGVudApbSW5zdGFsbF0KV2FudGVkQnk9bXVsdGktdXNlci50YXJnZXQKW1NlcnZpY2VdClJlc3RhcnQ9YWx3YXlz
+EOF
+cat << EOF | base64 -d > '/etc/systemd/system/unit2'
+W1VuaXRdCkRlc2NyaXB0aW9uPXRlc3QgY29udGVudApbSW5zdGFsbF0KV2FudGVkQnk9bXVsdGktdXNlci50YXJnZXQKW1NlcnZpY2VdClJlc3RhcnQ9YWx3YXlz
+EOF
+
+mkdir -p '/etc/systemd/system/unit2.d'
+cat << EOF | base64 -d > '/etc/systemd/system/unit2.d/dropin'
+W1NlcnZpY2VdCkVudmlyb25tZW50PSJET0NLRVJfT1BUUz0tLWxvZy1vcHQgbWF4LXNpemU9NjBtIC0tbG9nLW9wdCBtYXgtZmlsZT0zIg==
+EOF
+
+grep -sq "^nfsd$" /etc/modules || echo "nfsd" >>/etc/modules
+modprobe nfsd
+systemctl daemon-reload
+systemctl enable containerd && systemctl restart containerd
+systemctl enable docker && systemctl restart docker
+systemctl enable 'unit1' && systemctl restart 'unit1'
+systemctl enable 'unit2' && systemctl restart 'unit2'
