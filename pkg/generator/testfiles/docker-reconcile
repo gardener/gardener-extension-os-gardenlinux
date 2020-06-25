@@ -22,6 +22,7 @@ EOF
 
 grep -sq "^nfsd$" /etc/modules || echo "nfsd" >>/etc/modules
 modprobe nfsd
+nslookup $(hostname) || systemctl restart systemd-networkd
 systemctl daemon-reload
 systemctl enable 'unit1' && systemctl restart 'unit1'
 systemctl enable 'unit2' && systemctl restart 'unit2'
