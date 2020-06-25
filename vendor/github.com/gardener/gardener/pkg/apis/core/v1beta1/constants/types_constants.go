@@ -103,12 +103,18 @@ const (
 	// GardenerOperationReconcile is a constant for the value of the operation annotation describing a reconcile
 	// operation.
 	GardenerOperationReconcile = "reconcile"
+	// GardenerTimestamp is a constant for an annotation on a resource that describes the timestamp when a reconciliation has been requested.
+	// It is only used to guarantee an update event for watching clients in case the operation-annotation is already present.
+	GardenerTimestamp = "gardener.cloud/timestamp"
 	// GardenerOperationMigrate is a constant for the value of the operation annotation describing a migration
 	// operation.
 	GardenerOperationMigrate = "migrate"
 	// GardenerOperationRestore is a constant for the value of the operation annotation describing a restoration
 	// operation.
 	GardenerOperationRestore = "restore"
+	// GardenerOperationWaitForState is a constant for the value of the operation annotation describing a wait
+	// operation.
+	GardenerOperationWaitForState = "wait-for-state"
 
 	// DeprecatedGardenRole is the key for an annotation on a Kubernetes object indicating what it is used for.
 	//
@@ -275,4 +281,8 @@ const (
 	LabelWorkerPool = "worker.gardener.cloud/pool"
 	// LabelWorkerPool is a deprecated constant for a label that indicates the worker pool the node belongs to
 	LabelWorkerPoolDeprecated = "worker.garden.sapcloud.io/group"
+
+	// ReferencedResourcesPrefix is the prefix used when copying referenced resources to the Shoot namespace in the Seed,
+	// to avoid naming collisions with resources managed by Gardener.
+	ReferencedResourcesPrefix = "ref-"
 )

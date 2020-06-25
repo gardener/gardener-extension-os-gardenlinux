@@ -11,6 +11,7 @@ rules:
 - apiGroups:
   - extensions.gardener.cloud
   resources:
+  - clusters
   - operatingsystemconfigs
   - operatingsystemconfigs/status
   verbs:

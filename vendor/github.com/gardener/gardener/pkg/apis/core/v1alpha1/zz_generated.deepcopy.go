@@ -21,6 +21,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	v1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -75,7 +76,7 @@ func (in *AdmissionPlugin) DeepCopyInto(out *AdmissionPlugin) {
 	*out = *in
 	if in.Config != nil {
 		in, out := &in.Config, &out.Config
-		*out = new(ProviderConfig)
+		*out = new(runtime.RawExtension)
 		(*in).DeepCopyInto(*out)
 	}
 	return
@@ -263,7 +264,7 @@ func (in *BackupBucketSpec) DeepCopyInto(out *BackupBucketSpec) {
 	out.Provider = in.Provider
 	if in.ProviderConfig != nil {
 		in, out := &in.ProviderConfig, &out.ProviderConfig
-		*out = new(ProviderConfig)
+		*out = new(runtime.RawExtension)
 		(*in).DeepCopyInto(*out)
 	}
 	out.SecretRef = in.SecretRef
@@ -290,7 +291,7 @@ func (in *BackupBucketStatus) DeepCopyInto(out *BackupBucketStatus) {
 	*out = *in
 	if in.ProviderStatus != nil {
 		in, out := &in.ProviderStatus, &out.ProviderStatus
-		*out = new(ProviderConfig)
+		*out = new(runtime.RawExtension)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.LastOperation != nil {
@@ -553,7 +554,7 @@ func (in *CloudProfileSpec) DeepCopyInto(out *CloudProfileSpec) {
 	}
 	if in.ProviderConfig != nil {
 		in, out := &in.ProviderConfig, &out.ProviderConfig
-		*out = new(ProviderConfig)
+		*out = new(runtime.RawExtension)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Regions != nil {
@@ -657,6 +658,11 @@ func (in *Condition) DeepCopyInto(out *Condition) {
 	*out = *in
 	in.LastTransitionTime.DeepCopyInto(&out.LastTransitionTime)
 	in.LastUpdateTime.DeepCopyInto(&out.LastUpdateTime)
+	if in.Codes != nil {
+		in, out := &in.Codes, &out.Codes
+		*out = make([]ErrorCode, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
@@ -675,7 +681,7 @@ func (in *ContainerRuntime) DeepCopyInto(out *ContainerRuntime) {
 	*out = *in
 	if in.ProviderConfig != nil {
 		in, out := &in.ProviderConfig, &out.ProviderConfig
-		*out = new(ProviderConfig)
+		*out = new(runtime.RawExtension)
 		(*in).DeepCopyInto(*out)
 	}
 	return
@@ -696,7 +702,17 @@ func (in *ControllerDeployment) DeepCopyInto(out *ControllerDeployment) {
 	*out = *in
 	if in.ProviderConfig != nil {
 		in, out := &in.ProviderConfig, &out.ProviderConfig
-		*out = new(ProviderConfig)
+		*out = new(runtime.RawExtension)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Policy != nil {
+		in, out := &in.Policy, &out.Policy
+		*out = new(ControllerDeploymentPolicy)
+		**out = **in
+	}
+	if in.SeedSelector != nil {
+		in, out := &in.SeedSelector, &out.SeedSelector
+		*out = new(metav1.LabelSelector)
 		(*in).DeepCopyInto(*out)
 	}
 	return
@@ -803,7 +819,7 @@ func (in *ControllerInstallationStatus) DeepCopyInto(out *ControllerInstallation
 	}
 	if in.ProviderStatus != nil {
 		in, out := &in.ProviderStatus, &out.ProviderStatus
-		*out = new(ProviderConfig)
+		*out = new(runtime.RawExtension)
 		(*in).DeepCopyInto(*out)
 	}
 	return
@@ -918,6 +934,11 @@ func (in *ControllerResource) DeepCopyInto(out *ControllerResource) {
 	if in.ReconcileTimeout != nil {
 		in, out := &in.ReconcileTimeout, &out.ReconcileTimeout
 		*out = new(metav1.Duration)
+		**out = **in
+	}
+	if in.Primary != nil {
+		in, out := &in.Primary, &out.Primary
+		*out = new(bool)
 		**out = **in
 	}
 	return
@@ -1074,8 +1095,13 @@ func (in *Extension) DeepCopyInto(out *Extension) {
 	*out = *in
 	if in.ProviderConfig != nil {
 		in, out := &in.ProviderConfig, &out.ProviderConfig
-		*out = new(ProviderConfig)
+		*out = new(runtime.RawExtension)
 		(*in).DeepCopyInto(*out)
+	}
+	if in.Disabled != nil {
+		in, out := &in.Disabled, &out.Disabled
+		*out = new(bool)
+		**out = **in
 	}
 	return
 }
@@ -1103,7 +1129,16 @@ func (in *ExtensionResourceState) DeepCopyInto(out *ExtensionResourceState) {
 		*out = new(string)
 		**out = **in
 	}
-	in.State.DeepCopyInto(&out.State)
+	if in.State != nil {
+		in, out := &in.State, &out.State
+		*out = new(runtime.RawExtension)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Resources != nil {
+		in, out := &in.Resources, &out.Resources
+		*out = make([]v1beta1.NamedResourceReference, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
@@ -1369,6 +1404,11 @@ func (in *KubeProxyConfig) DeepCopy() *KubeProxyConfig {
 func (in *KubeSchedulerConfig) DeepCopyInto(out *KubeSchedulerConfig) {
 	*out = *in
 	in.KubernetesConfig.DeepCopyInto(&out.KubernetesConfig)
+	if in.KubeMaxPDVols != nil {
+		in, out := &in.KubeMaxPDVols, &out.KubeMaxPDVols
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 
@@ -1439,6 +1479,11 @@ func (in *KubeletConfig) DeepCopyInto(out *KubeletConfig) {
 	if in.ImagePullProgressDeadline != nil {
 		in, out := &in.ImagePullProgressDeadline, &out.ImagePullProgressDeadline
 		*out = new(metav1.Duration)
+		**out = **in
+	}
+	if in.FailSwapOn != nil {
+		in, out := &in.FailSwapOn, &out.FailSwapOn
+		*out = new(bool)
 		**out = **in
 	}
 	return
@@ -1862,6 +1907,11 @@ func (in *Maintenance) DeepCopyInto(out *Maintenance) {
 		*out = new(MaintenanceTimeWindow)
 		**out = **in
 	}
+	if in.ConfineSpecUpdateRollout != nil {
+		in, out := &in.ConfineSpecUpdateRollout, &out.ConfineSpecUpdateRollout
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 
@@ -1929,11 +1979,28 @@ func (in *Monitoring) DeepCopy() *Monitoring {
 }
 
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *NamedResourceReference) DeepCopyInto(out *NamedResourceReference) {
+	*out = *in
+	out.ResourceRef = in.ResourceRef
+	return
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new NamedResourceReference.
+func (in *NamedResourceReference) DeepCopy() *NamedResourceReference {
+	if in == nil {
+		return nil
+	}
+	out := new(NamedResourceReference)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
 func (in *Networking) DeepCopyInto(out *Networking) {
 	*out = *in
 	if in.ProviderConfig != nil {
 		in, out := &in.ProviderConfig, &out.ProviderConfig
-		*out = new(ProviderConfig)
+		*out = new(runtime.RawExtension)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Pods != nil {
@@ -2328,6 +2395,11 @@ func (in *ProjectSpec) DeepCopyInto(out *ProjectSpec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.Tolerations != nil {
+		in, out := &in.Tolerations, &out.Tolerations
+		*out = new(ProjectTolerations)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
@@ -2358,16 +2430,46 @@ func (in *ProjectStatus) DeepCopy() *ProjectStatus {
 }
 
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *ProjectTolerations) DeepCopyInto(out *ProjectTolerations) {
+	*out = *in
+	if in.Defaults != nil {
+		in, out := &in.Defaults, &out.Defaults
+		*out = make([]Toleration, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.Whitelist != nil {
+		in, out := &in.Whitelist, &out.Whitelist
+		*out = make([]Toleration, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	return
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new ProjectTolerations.
+func (in *ProjectTolerations) DeepCopy() *ProjectTolerations {
+	if in == nil {
+		return nil
+	}
+	out := new(ProjectTolerations)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
 func (in *Provider) DeepCopyInto(out *Provider) {
 	*out = *in
 	if in.ControlPlaneConfig != nil {
 		in, out := &in.ControlPlaneConfig, &out.ControlPlaneConfig
-		*out = new(ProviderConfig)
+		*out = new(runtime.RawExtension)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.InfrastructureConfig != nil {
 		in, out := &in.InfrastructureConfig, &out.InfrastructureConfig
-		*out = new(ProviderConfig)
+		*out = new(runtime.RawExtension)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Workers != nil {
@@ -2386,23 +2488,6 @@ func (in *Provider) DeepCopy() *Provider {
 		return nil
 	}
 	out := new(Provider)
-	in.DeepCopyInto(out)
-	return out
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *ProviderConfig) DeepCopyInto(out *ProviderConfig) {
-	*out = *in
-	in.RawExtension.DeepCopyInto(&out.RawExtension)
-	return
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new ProviderConfig.
-func (in *ProviderConfig) DeepCopy() *ProviderConfig {
-	if in == nil {
-		return nil
-	}
-	out := new(ProviderConfig)
 	in.DeepCopyInto(out)
 	return out
 }
@@ -2506,6 +2591,13 @@ func (in *Region) DeepCopyInto(out *Region) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.Labels != nil {
+		in, out := &in.Labels, &out.Labels
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
@@ -2515,6 +2607,24 @@ func (in *Region) DeepCopy() *Region {
 		return nil
 	}
 	out := new(Region)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *ResourceData) DeepCopyInto(out *ResourceData) {
+	*out = *in
+	out.CrossVersionObjectReference = in.CrossVersionObjectReference
+	in.Data.DeepCopyInto(&out.Data)
+	return
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new ResourceData.
+func (in *ResourceData) DeepCopy() *ResourceData {
+	if in == nil {
+		return nil
+	}
+	out := new(ResourceData)
 	in.DeepCopyInto(out)
 	return out
 }
@@ -2617,7 +2727,7 @@ func (in *SeedBackup) DeepCopyInto(out *SeedBackup) {
 	*out = *in
 	if in.ProviderConfig != nil {
 		in, out := &in.ProviderConfig, &out.ProviderConfig
-		*out = new(ProviderConfig)
+		*out = new(runtime.RawExtension)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Region != nil {
@@ -2717,6 +2827,11 @@ func (in *SeedNetworks) DeepCopy() *SeedNetworks {
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
 func (in *SeedProvider) DeepCopyInto(out *SeedProvider) {
 	*out = *in
+	if in.ProviderConfig != nil {
+		in, out := &in.ProviderConfig, &out.ProviderConfig
+		*out = new(runtime.RawExtension)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
@@ -2726,6 +2841,113 @@ func (in *SeedProvider) DeepCopy() *SeedProvider {
 		return nil
 	}
 	out := new(SeedProvider)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *SeedSettingExcessCapacityReservation) DeepCopyInto(out *SeedSettingExcessCapacityReservation) {
+	*out = *in
+	return
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new SeedSettingExcessCapacityReservation.
+func (in *SeedSettingExcessCapacityReservation) DeepCopy() *SeedSettingExcessCapacityReservation {
+	if in == nil {
+		return nil
+	}
+	out := new(SeedSettingExcessCapacityReservation)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *SeedSettingLoadBalancerServices) DeepCopyInto(out *SeedSettingLoadBalancerServices) {
+	*out = *in
+	if in.Annotations != nil {
+		in, out := &in.Annotations, &out.Annotations
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	return
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new SeedSettingLoadBalancerServices.
+func (in *SeedSettingLoadBalancerServices) DeepCopy() *SeedSettingLoadBalancerServices {
+	if in == nil {
+		return nil
+	}
+	out := new(SeedSettingLoadBalancerServices)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *SeedSettingScheduling) DeepCopyInto(out *SeedSettingScheduling) {
+	*out = *in
+	return
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new SeedSettingScheduling.
+func (in *SeedSettingScheduling) DeepCopy() *SeedSettingScheduling {
+	if in == nil {
+		return nil
+	}
+	out := new(SeedSettingScheduling)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *SeedSettingShootDNS) DeepCopyInto(out *SeedSettingShootDNS) {
+	*out = *in
+	return
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new SeedSettingShootDNS.
+func (in *SeedSettingShootDNS) DeepCopy() *SeedSettingShootDNS {
+	if in == nil {
+		return nil
+	}
+	out := new(SeedSettingShootDNS)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *SeedSettings) DeepCopyInto(out *SeedSettings) {
+	*out = *in
+	if in.ExcessCapacityReservation != nil {
+		in, out := &in.ExcessCapacityReservation, &out.ExcessCapacityReservation
+		*out = new(SeedSettingExcessCapacityReservation)
+		**out = **in
+	}
+	if in.Scheduling != nil {
+		in, out := &in.Scheduling, &out.Scheduling
+		*out = new(SeedSettingScheduling)
+		**out = **in
+	}
+	if in.ShootDNS != nil {
+		in, out := &in.ShootDNS, &out.ShootDNS
+		*out = new(SeedSettingShootDNS)
+		**out = **in
+	}
+	if in.LoadBalancerServices != nil {
+		in, out := &in.LoadBalancerServices, &out.LoadBalancerServices
+		*out = new(SeedSettingLoadBalancerServices)
+		(*in).DeepCopyInto(*out)
+	}
+	return
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new SeedSettings.
+func (in *SeedSettings) DeepCopy() *SeedSettings {
+	if in == nil {
+		return nil
+	}
+	out := new(SeedSettings)
 	in.DeepCopyInto(out)
 	return out
 }
@@ -2745,7 +2967,7 @@ func (in *SeedSpec) DeepCopyInto(out *SeedSpec) {
 	}
 	out.DNS = in.DNS
 	in.Networks.DeepCopyInto(&out.Networks)
-	out.Provider = in.Provider
+	in.Provider.DeepCopyInto(&out.Provider)
 	if in.SecretRef != nil {
 		in, out := &in.SecretRef, &out.SecretRef
 		*out = new(v1.SecretReference)
@@ -2761,6 +2983,11 @@ func (in *SeedSpec) DeepCopyInto(out *SeedSpec) {
 	if in.Volume != nil {
 		in, out := &in.Volume, &out.Volume
 		*out = new(SeedVolume)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Settings != nil {
+		in, out := &in.Settings, &out.Settings
+		*out = new(SeedSettings)
 		(*in).DeepCopyInto(*out)
 	}
 	return
@@ -2964,7 +3191,7 @@ func (in *ShootMachineImage) DeepCopyInto(out *ShootMachineImage) {
 	*out = *in
 	if in.ProviderConfig != nil {
 		in, out := &in.ProviderConfig, &out.ProviderConfig
-		*out = new(ProviderConfig)
+		*out = new(runtime.RawExtension)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Version != nil {
@@ -3059,6 +3286,23 @@ func (in *ShootSpec) DeepCopyInto(out *ShootSpec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.SeedSelector != nil {
+		in, out := &in.SeedSelector, &out.SeedSelector
+		*out = new(metav1.LabelSelector)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Resources != nil {
+		in, out := &in.Resources, &out.Resources
+		*out = make([]NamedResourceReference, len(*in))
+		copy(*out, *in)
+	}
+	if in.Tolerations != nil {
+		in, out := &in.Tolerations, &out.Tolerations
+		*out = make([]Toleration, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	return
 }
 
@@ -3149,6 +3393,13 @@ func (in *ShootStateSpec) DeepCopyInto(out *ShootStateSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.Resources != nil {
+		in, out := &in.Resources, &out.Resources
+		*out = make([]ResourceData, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	return
 }
 
@@ -3215,6 +3466,27 @@ func (in *ShootStatus) DeepCopy() *ShootStatus {
 		return nil
 	}
 	out := new(ShootStatus)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *Toleration) DeepCopyInto(out *Toleration) {
+	*out = *in
+	if in.Value != nil {
+		in, out := &in.Value, &out.Value
+		*out = new(string)
+		**out = **in
+	}
+	return
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new Toleration.
+func (in *Toleration) DeepCopy() *Toleration {
+	if in == nil {
+		return nil
+	}
+	out := new(Toleration)
 	in.DeepCopyInto(out)
 	return out
 }
@@ -3316,7 +3588,7 @@ func (in *Worker) DeepCopyInto(out *Worker) {
 	}
 	if in.ProviderConfig != nil {
 		in, out := &in.ProviderConfig, &out.ProviderConfig
-		*out = new(ProviderConfig)
+		*out = new(runtime.RawExtension)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Taints != nil {

@@ -17,12 +17,15 @@ package v1alpha1
 import (
 	"math"
 
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/gardener/gardener/pkg/utils"
 	versionutils "github.com/gardener/gardener/pkg/utils/version"
 
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/pointer"
 )
 
 func addDefaultingFuncs(scheme *runtime.Scheme) error {
@@ -53,6 +56,14 @@ func SetDefaults_Project(obj *Project) {
 			obj.Spec.Members[i].Role = ProjectMemberViewer
 		}
 	}
+
+	if obj.Spec.Namespace != nil && *obj.Spec.Namespace == v1beta1constants.GardenNamespace {
+		if obj.Spec.Tolerations == nil {
+			obj.Spec.Tolerations = &ProjectTolerations{}
+		}
+		addTolerations(&obj.Spec.Tolerations.Whitelist, Toleration{Key: SeedTaintProtected})
+		addTolerations(&obj.Spec.Tolerations.Defaults, Toleration{Key: SeedTaintProtected})
+	}
 }
 
 func defaultSubject(obj *rbacv1.Subject) {
@@ -81,6 +92,43 @@ func SetDefaults_VolumeType(obj *VolumeType) {
 	if obj.Usable == nil {
 		trueVar := true
 		obj.Usable = &trueVar
+	}
+}
+
+// SetDefaults_Seed sets default values for Seed objects.
+func SetDefaults_Seed(obj *Seed) {
+	if obj.Spec.Settings == nil {
+		obj.Spec.Settings = &SeedSettings{}
+	}
+
+	if obj.Spec.Settings.ExcessCapacityReservation == nil {
+		enabled := true
+		for _, taint := range obj.Spec.Taints {
+			if taint.Key == DeprecatedSeedTaintDisableCapacityReservation {
+				enabled = false
+			}
+		}
+		obj.Spec.Settings.ExcessCapacityReservation = &SeedSettingExcessCapacityReservation{Enabled: enabled}
+	}
+
+	if obj.Spec.Settings.Scheduling == nil {
+		visible := true
+		for _, taint := range obj.Spec.Taints {
+			if taint.Key == DeprecatedSeedTaintInvisible {
+				visible = false
+			}
+		}
+		obj.Spec.Settings.Scheduling = &SeedSettingScheduling{Visible: visible}
+	}
+
+	if obj.Spec.Settings.ShootDNS == nil {
+		enabled := true
+		for _, taint := range obj.Spec.Taints {
+			if taint.Key == DeprecatedSeedTaintDisableDNS {
+				enabled = false
+			}
+		}
+		obj.Spec.Settings.ShootDNS = &SeedSettingShootDNS{Enabled: enabled}
 	}
 }
 
@@ -143,14 +191,28 @@ func SetDefaults_Shoot(obj *Shoot) {
 		p := ShootPurposeEvaluation
 		obj.Spec.Purpose = &p
 	}
+
+	// In previous Gardener versions that weren't supporting tolerations, it was hard-coded to (only) allow shoots in the
+	// `garden` namespace to use seeds that had the 'protected' taint. In order to be backwards compatible, now with the
+	// introduction of tolerations, we add the 'protected' toleration to the garden namespace by default.
+	if obj.Namespace == v1beta1constants.GardenNamespace {
+		addTolerations(&obj.Spec.Tolerations, Toleration{Key: SeedTaintProtected})
+	}
+
+	if obj.Spec.Kubernetes.Kubelet == nil {
+		obj.Spec.Kubernetes.Kubelet = &KubeletConfig{}
+	}
+	if obj.Spec.Kubernetes.Kubelet.FailSwapOn == nil {
+		obj.Spec.Kubernetes.Kubelet.FailSwapOn = &trueVar
+	}
+
+	if obj.Spec.Maintenance == nil {
+		obj.Spec.Maintenance = &Maintenance{}
+	}
 }
 
 // SetDefaults_Maintenance sets default values for Maintenance objects.
 func SetDefaults_Maintenance(obj *Maintenance) {
-	if obj == nil {
-		obj = &Maintenance{}
-	}
-
 	if obj.AutoUpdate == nil {
 		obj.AutoUpdate = &MaintenanceAutoUpdate{
 			KubernetesVersion:   true,
@@ -185,6 +247,21 @@ func SetDefaults_NginxIngress(obj *NginxIngress) {
 	}
 }
 
+// SetDefaults_ControllerResource sets default values for ControllerResource objects.
+func SetDefaults_ControllerResource(obj *ControllerResource) {
+	if obj.Primary == nil {
+		obj.Primary = pointer.BoolPtr(true)
+	}
+}
+
+// SetDefaults_ControllerDeployment sets default values for ControllerDeployment objects.
+func SetDefaults_ControllerDeployment(obj *ControllerDeployment) {
+	p := ControllerDeploymentPolicyOnDemand
+	if obj.Policy == nil {
+		obj.Policy = &p
+	}
+}
+
 // Helper functions
 
 func calculateDefaultNodeCIDRMaskSize(kubelet *KubeletConfig, workers []Worker) *int32 {
@@ -203,4 +280,21 @@ func calculateDefaultNodeCIDRMaskSize(kubelet *KubeletConfig, workers []Worker) 
 	// by having approximately twice as many available IP addresses as possible Pods, Kubernetes is able to mitigate IP address reuse as Pods are added to and removed from a node.
 	nodeCidrRange := int32(32 - int(math.Ceil(math.Log2(float64(maxPods*2)))))
 	return &nodeCidrRange
+}
+
+func addTolerations(tolerations *[]Toleration, additionalTolerations ...Toleration) {
+	existingTolerations := sets.NewString()
+	for _, toleration := range *tolerations {
+		existingTolerations.Insert(utils.IDForKeyWithOptionalValue(toleration.Key, toleration.Value))
+	}
+
+	for _, toleration := range additionalTolerations {
+		if existingTolerations.Has(toleration.Key) {
+			continue
+		}
+		if existingTolerations.Has(utils.IDForKeyWithOptionalValue(toleration.Key, toleration.Value)) {
+			continue
+		}
+		*tolerations = append(*tolerations, toleration)
+	}
 }
