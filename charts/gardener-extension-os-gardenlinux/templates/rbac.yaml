@@ -14,6 +14,7 @@ rules:
   - clusters
   - operatingsystemconfigs
   - operatingsystemconfigs/status
+  - operatingsystemconfigs/finalizers  
   verbs:
   - get
   - list
