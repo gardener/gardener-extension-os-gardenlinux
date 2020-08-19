@@ -43,8 +43,9 @@ systemctl daemon-reload
 {{- if .Bootstrap }}
 {{- if isContainerDEnabled .CRI }}
 systemctl enable containerd && systemctl restart containerd
+{{- else }}
+systemctl enable docker.service && systemctl enable docker.socket && systemctl restart docker
 {{- end }}
-systemctl enable docker && systemctl restart docker
 {{- end }}
 
 {{- range $_, $unit := .Units }}
