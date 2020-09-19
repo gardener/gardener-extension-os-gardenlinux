@@ -32,6 +32,26 @@ modprobe nfsd
 nslookup $(hostname) || systemctl restart systemd-networkd
 systemctl daemon-reload
 systemctl enable containerd && systemctl restart containerd
+if grep -q '^GARDENLINUX_BUILD_ID=27.[01]' /etc/os-release
+then
+    PARTITION=$(mount -v | grep "^/.*/usr" | awk '{print $1}')
+    mount -o remount,rw ${PARTITION} /usr
+    until apt update -qq && apt install --no-upgrade -qqy cifs-utils; do sleep 1; done
+    mount -o remount,ro ${PARTITION} /usr
+
+    mkdir -p /etc/docker
+    cat << EOF > /etc/docker/daemon.json
+{ "storage-driver": "overlay2",
+  "default-ulimits": {
+      "memlock": {
+          "name": "memlock",
+          "hard": 67108864,
+          "soft": 67108864
+      }
+  }
+}
+EOF
+fi
 systemctl enable docker && systemctl restart docker
 systemctl enable 'unit1' && systemctl restart 'unit1'
 systemctl enable 'unit2' && systemctl restart 'unit2'
