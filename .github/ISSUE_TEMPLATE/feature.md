@@ -21,7 +21,7 @@ If multiple identifiers make sense you can also state the commands multiple time
 /area TODO
 /kind enhancement
 /priority normal
-/os gardenlinux
+/os garden-linux
 
 **What would you like to be added**:
 
