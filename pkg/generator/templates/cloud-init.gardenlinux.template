@@ -40,17 +40,24 @@ grep -sq "^nfsd$" /etc/modules || echo "nfsd" >>/etc/modules
 modprobe nfsd
 nslookup $(hostname) || systemctl restart systemd-networkd
 systemctl daemon-reload
+
+if grep -q '^GARDENLINUX_BUILD_ID=27.[01]' /etc/os-release && ! dpkg-query --show cifs-utils &>/dev/null
+then
+    PARTITION=$(mount -v | grep "^/.*/usr" | awk '{print $1}')
+    mount -o remount,rw ${PARTITION} /usr
+    until apt update -qq && apt install --no-upgrade -qqy cifs-utils
+    do
+        sleep 1
+    done
+    mount -o remount,ro ${PARTITION} /usr
+fi
+
 {{- if .Bootstrap }}
 {{- if isContainerDEnabled .CRI }}
 systemctl enable containerd && systemctl restart containerd
 {{- end }}
 if grep -q '^GARDENLINUX_BUILD_ID=27.[01]' /etc/os-release
 then
-    PARTITION=$(mount -v | grep "^/.*/usr" | awk '{print $1}')
-    mount -o remount,rw ${PARTITION} /usr
-    until apt update -qq && apt install --no-upgrade -qqy cifs-utils; do sleep 1; done
-    mount -o remount,ro ${PARTITION} /usr
-
     mkdir -p /etc/docker
     cat << EOF > /etc/docker/daemon.json
 { "storage-driver": "overlay2",
