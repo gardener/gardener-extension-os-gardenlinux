@@ -32,11 +32,11 @@ modprobe nfsd
 nslookup $(hostname) || systemctl restart systemd-networkd
 systemctl daemon-reload
 
-if grep -q '^GARDENLINUX_BUILD_ID=27.[01]' /etc/os-release && ! dpkg-query --show cifs-utils &>/dev/null
+if grep -q '^GARDENLINUX_BUILD_ID=27.[01]' /etc/os-release && ! dpkg -V cifs-utils xfsprogs &>/dev/null
 then
     PARTITION=$(mount -v | grep "^/.*/usr" | awk '{print $1}')
     mount -o remount,rw ${PARTITION} /usr
-    until apt update -qq && apt install --no-upgrade -qqy cifs-utils
+    until apt update -qq && apt install --no-upgrade -qqy cifs-utils xfsprogs
     do
         sleep 1
     done
