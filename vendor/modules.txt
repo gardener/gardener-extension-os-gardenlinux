@@ -46,7 +46,6 @@ github.com/gardener/gardener/extensions/pkg/controller/error
 github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig
 github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon
 github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/actuator
-github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/app
 github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/cloudinit
 github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/cmd
 github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/generator
@@ -492,6 +491,7 @@ honnef.co/go/tools/stylecheck
 honnef.co/go/tools/unused
 honnef.co/go/tools/version
 # k8s.io/api v0.18.8 => k8s.io/api v0.18.8
+## explicit
 k8s.io/api/admission/v1beta1
 k8s.io/api/admissionregistration/v1
 k8s.io/api/admissionregistration/v1beta1
@@ -714,6 +714,7 @@ k8s.io/code-generator/pkg/namer
 k8s.io/code-generator/pkg/util
 k8s.io/code-generator/third_party/forked/golang/reflect
 # k8s.io/component-base v0.18.8 => k8s.io/component-base v0.18.8
+## explicit
 k8s.io/component-base/config
 # k8s.io/gengo v0.0.0-20200413195148-3a45101e95ac
 k8s.io/gengo/args
