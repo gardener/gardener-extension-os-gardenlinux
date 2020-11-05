@@ -12,20 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controller
+package managedresources
 
 import (
 	"context"
 	"time"
+
+	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 
 	resourcesv1alpha1 "github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1"
 	"github.com/gardener/gardener-resource-manager/pkg/manager"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sretry "k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 )
 
 // CreateManagedResourceFromUnstructured creates a managed resource and its secret with the given name, class, and objects in the given namespace.
@@ -98,4 +99,22 @@ func WaitUntilManagedResourceDeleted(ctx context.Context, client client.Client, 
 		},
 	}
 	return kutil.WaitUntilResourceDeleted(ctx, client, mr, 2*time.Second)
+}
+
+// KeepManagedResourceObjects updates the keepObjects field of the managed resource with the given name in the given namespace.
+func KeepManagedResourceObjects(ctx context.Context, c client.Client, namespace, name string, keepObjects bool) error {
+	resource := &resourcesv1alpha1.ManagedResource{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+	if err := kutil.TryUpdate(ctx, k8sretry.DefaultBackoff, c, resource, func() error {
+		resource.Spec.KeepObjects = &keepObjects
+		return nil
+	}); client.IgnoreNotFound(err) != nil {
+		return errors.Wrapf(err, "could not update managed resource '%s/%s'", namespace, name)
+	}
+
+	return nil
 }

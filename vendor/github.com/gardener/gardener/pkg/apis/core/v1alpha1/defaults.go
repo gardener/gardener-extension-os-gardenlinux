@@ -23,6 +23,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/pointer"
@@ -102,37 +103,33 @@ func SetDefaults_Seed(obj *Seed) {
 	}
 
 	if obj.Spec.Settings.ExcessCapacityReservation == nil {
-		enabled := true
-		for _, taint := range obj.Spec.Taints {
-			if taint.Key == DeprecatedSeedTaintDisableCapacityReservation {
-				enabled = false
-			}
-		}
-		obj.Spec.Settings.ExcessCapacityReservation = &SeedSettingExcessCapacityReservation{Enabled: enabled}
+		obj.Spec.Settings.ExcessCapacityReservation = &SeedSettingExcessCapacityReservation{Enabled: true}
 	}
 
 	if obj.Spec.Settings.Scheduling == nil {
-		visible := true
-		for _, taint := range obj.Spec.Taints {
-			if taint.Key == DeprecatedSeedTaintInvisible {
-				visible = false
-			}
-		}
-		obj.Spec.Settings.Scheduling = &SeedSettingScheduling{Visible: visible}
+		obj.Spec.Settings.Scheduling = &SeedSettingScheduling{Visible: true}
 	}
 
 	if obj.Spec.Settings.ShootDNS == nil {
-		enabled := true
-		for _, taint := range obj.Spec.Taints {
-			if taint.Key == DeprecatedSeedTaintDisableDNS {
-				enabled = false
-			}
-		}
-		obj.Spec.Settings.ShootDNS = &SeedSettingShootDNS{Enabled: enabled}
+		obj.Spec.Settings.ShootDNS = &SeedSettingShootDNS{Enabled: true}
 	}
 
 	if obj.Spec.Settings.VerticalPodAutoscaler == nil {
 		obj.Spec.Settings.VerticalPodAutoscaler = &SeedSettingVerticalPodAutoscaler{Enabled: true}
+	}
+
+	// TODO: remove taints removal in version >=1.13
+	taintsToRemove := []string{
+		"seed.gardener.cloud/disable-capacity-reservation",
+		"seed.gardener.cloud/disable-dns",
+		"seed.gardener.cloud/invisible",
+	}
+	for _, taint := range taintsToRemove {
+		for i := len(obj.Spec.Taints) - 1; i >= 0; i-- {
+			if obj.Spec.Taints[i].Key == taint {
+				obj.Spec.Taints = append(obj.Spec.Taints[:i], obj.Spec.Taints[i+1:]...)
+			}
+		}
 	}
 }
 
@@ -142,11 +139,8 @@ func SetDefaults_Shoot(obj *Shoot) {
 	// Error is ignored here because we cannot do anything meaningful with it.
 	// k8sVersionLessThan116 will default to `false`.
 
-	trueVar := true
-	falseVar := false
-
 	if obj.Spec.Kubernetes.AllowPrivilegedContainers == nil {
-		obj.Spec.Kubernetes.AllowPrivilegedContainers = &trueVar
+		obj.Spec.Kubernetes.AllowPrivilegedContainers = pointer.BoolPtr(true)
 	}
 
 	if obj.Spec.Kubernetes.KubeAPIServer == nil {
@@ -154,9 +148,9 @@ func SetDefaults_Shoot(obj *Shoot) {
 	}
 	if obj.Spec.Kubernetes.KubeAPIServer.EnableBasicAuthentication == nil {
 		if k8sVersionLessThan116 {
-			obj.Spec.Kubernetes.KubeAPIServer.EnableBasicAuthentication = &trueVar
+			obj.Spec.Kubernetes.KubeAPIServer.EnableBasicAuthentication = pointer.BoolPtr(true)
 		} else {
-			obj.Spec.Kubernetes.KubeAPIServer.EnableBasicAuthentication = &falseVar
+			obj.Spec.Kubernetes.KubeAPIServer.EnableBasicAuthentication = pointer.BoolPtr(false)
 		}
 	}
 
@@ -207,7 +201,33 @@ func SetDefaults_Shoot(obj *Shoot) {
 		obj.Spec.Kubernetes.Kubelet = &KubeletConfig{}
 	}
 	if obj.Spec.Kubernetes.Kubelet.FailSwapOn == nil {
-		obj.Spec.Kubernetes.Kubelet.FailSwapOn = &trueVar
+		obj.Spec.Kubernetes.Kubelet.FailSwapOn = pointer.BoolPtr(true)
+	}
+
+	var (
+		kubeReservedMemory = resource.MustParse("1Gi")
+		kubeReservedCPU    = resource.MustParse("80m")
+		kubeReservedPID    = resource.MustParse("20k")
+
+		k8sVersionGreaterEqual115, _ = versionutils.CompareVersions(obj.Spec.Kubernetes.Version, ">=", "1.15")
+	)
+
+	if obj.Spec.Kubernetes.Kubelet.KubeReserved == nil {
+		obj.Spec.Kubernetes.Kubelet.KubeReserved = &KubeletConfigReserved{Memory: &kubeReservedMemory, CPU: &kubeReservedCPU}
+
+		if k8sVersionGreaterEqual115 {
+			obj.Spec.Kubernetes.Kubelet.KubeReserved.PID = &kubeReservedPID
+		}
+	} else {
+		if obj.Spec.Kubernetes.Kubelet.KubeReserved.Memory == nil {
+			obj.Spec.Kubernetes.Kubelet.KubeReserved.Memory = &kubeReservedMemory
+		}
+		if obj.Spec.Kubernetes.Kubelet.KubeReserved.CPU == nil {
+			obj.Spec.Kubernetes.Kubelet.KubeReserved.CPU = &kubeReservedCPU
+		}
+		if obj.Spec.Kubernetes.Kubelet.KubeReserved.PID == nil && k8sVersionGreaterEqual115 {
+			obj.Spec.Kubernetes.Kubelet.KubeReserved.PID = &kubeReservedPID
+		}
 	}
 
 	if obj.Spec.Maintenance == nil {
