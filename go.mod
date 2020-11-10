@@ -1,6 +1,6 @@
 module github.com/gardener/gardener-extension-os-gardenlinux
 
-go 1.14
+go 1.15
 
 require (
 	github.com/ahmetb/gen-crd-api-reference-docs v0.2.0
@@ -10,8 +10,10 @@ require (
 	github.com/onsi/ginkgo v1.14.0
 	github.com/onsi/gomega v1.10.1
 	github.com/spf13/cobra v0.0.6
+	k8s.io/api v0.18.8
 	k8s.io/apimachinery v0.18.8
 	k8s.io/code-generator v0.18.8
+	k8s.io/component-base v0.18.8
 	sigs.k8s.io/controller-runtime v0.6.3
 )
 
