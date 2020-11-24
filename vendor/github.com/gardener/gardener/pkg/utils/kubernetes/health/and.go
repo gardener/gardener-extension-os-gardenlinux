@@ -12,13 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package constants
+package health
 
-// GetShootVPADeploymentNames returns the names of all VPA related deployments related to shoot clusters.
-func GetShootVPADeploymentNames() []string {
-	return []string{
-		DeploymentNameVPAAdmissionController,
-		DeploymentNameVPARecommender,
-		DeploymentNameVPAUpdater,
+import (
+	"k8s.io/apimachinery/pkg/runtime"
+)
+
+// Func is a type for a function that checks the health of a runtime.Object.
+type Func func(runtime.Object) error
+
+// And combines multiple health check funcs to a single func, checking all funcs sequentially and return the first
+// error that occurs or nil if no error occurs.¬
+func And(fns ...Func) Func {
+	return func(o runtime.Object) error {
+		for _, fn := range fns {
+			if err := fn(o); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 }
