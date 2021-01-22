@@ -29,6 +29,7 @@ var (
 	permissions = int32(0644)
 	unit1       = "unit1"
 	unit2       = "unit2"
+	ccdService  = "cloud-config-downloader.service"
 	dropin      = "dropin"
 	filePath    = "/var/lib/kubelet/ca.crt"
 
@@ -69,6 +70,9 @@ dataKey: token`)
 						Content: dropinContent,
 					},
 				},
+			},
+			{
+				Name: ccdService,
 			},
 		},
 		Files: []*commongen.File{
