@@ -20,6 +20,7 @@ cat << EOF | base64 -d > '/etc/systemd/system/unit2.d/dropin'
 W1NlcnZpY2VdCkVudmlyb25tZW50PSJET0NLRVJfT1BUUz0tLWxvZy1vcHQgbWF4LXNpemU9NjBtIC0tbG9nLW9wdCBtYXgtZmlsZT0zIg==
 EOF
 
+
 grep -sq "^nfsd$" /etc/modules || echo "nfsd" >>/etc/modules
 modprobe nfsd
 nslookup $(hostname) || systemctl restart systemd-networkd
@@ -53,3 +54,4 @@ fi
 systemctl enable docker && systemctl restart docker
 systemctl enable 'unit1' && systemctl restart 'unit1'
 systemctl enable 'unit2' && systemctl restart 'unit2'
+systemctl enable 'cloud-config-downloader.service' && systemctl restart 'cloud-config-downloader.service'
