@@ -5,6 +5,15 @@ image:
 
 resources: {}
 
+vpa:
+  enabled: true
+  resourcePolicy:
+    minAllowed:
+      cpu: 50m
+      memory: 64Mi
+  updatePolicy:
+    updateMode: "Auto"
+
 controllers:
   concurrentSyncs: 5
   ignoreOperationAnnotation: false
