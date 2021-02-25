@@ -6,6 +6,7 @@ gardener-extension-os-gardenlinux:
       version:
         preprocess: 'inject-commit-hash'
       publish:
+        oci-builder: 'kaniko'
         dockerimages:
           gardener-extension-os-gardenlinux:
             registry: 'gcr-readwrite'
@@ -41,6 +42,7 @@ gardener-extension-os-gardenlinux:
               slack_cfg_name: 'scp_workspace'
         component_descriptor: ~
         publish:
+          oci-builder: 'kaniko'
           dockerimages:
             gardener-extension-os-gardenlinux:
               tag_as_latest: true
