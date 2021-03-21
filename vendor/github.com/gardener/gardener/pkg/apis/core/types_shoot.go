@@ -50,6 +50,14 @@ type ShootList struct {
 	Items []Shoot
 }
 
+// ShootTemplate is a template for creating a Shoot object.
+type ShootTemplate struct {
+	// Standard object metadata.
+	metav1.ObjectMeta
+	// Specification of the desired behavior of the Shoot.
+	Spec ShootSpec
+}
+
 // ShootSpec is the specification of a Shoot.
 type ShootSpec struct {
 	// Addons contains information about enabled/disabled addons and their configuration.
@@ -162,7 +170,7 @@ const (
 // NginxIngress describes configuration values for the nginx-ingress addon.
 type NginxIngress struct {
 	Addon
-	// LoadBalancerSourceRanges is list of whitelist IP sources for NginxIngress
+	// LoadBalancerSourceRanges is list of allowed IP sources for NginxIngress
 	LoadBalancerSourceRanges []string
 	// Config contains custom configuration for the nginx-ingress-controller configuration.
 	// See https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/nginx-configuration/configmap.md#configuration-options
@@ -834,6 +842,7 @@ type WorkerSystemComponents struct {
 // WorkerKubernetes contains configuration for Kubernetes components related to this worker pool.
 type WorkerKubernetes struct {
 	// Kubelet contains configuration settings for all kubelets of this worker pool.
+	// If set, all `spec.kubernetes.kubelet` settings will be overwritten for this worker pool (no merge of settings).
 	Kubelet *KubeletConfig
 }
 
