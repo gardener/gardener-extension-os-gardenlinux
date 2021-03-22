@@ -193,7 +193,7 @@ const (
 // NginxIngress describes configuration values for the nginx-ingress addon.
 type NginxIngress struct {
 	Addon `json:",inline" protobuf:"bytes,4,opt,name=addon"`
-	// LoadBalancerSourceRanges is list of whitelist IP sources for NginxIngress
+	// LoadBalancerSourceRanges is list of allowed IP sources for NginxIngress
 	// +optional
 	LoadBalancerSourceRanges []string `json:"loadBalancerSourceRanges,omitempty" protobuf:"bytes,1,rep,name=loadBalancerSourceRanges"`
 	// Config contains custom configuration for the nginx-ingress-controller configuration.
@@ -1038,6 +1038,7 @@ type WorkerSystemComponents struct {
 // WorkerKubernetes contains configuration for Kubernetes components related to this worker pool.
 type WorkerKubernetes struct {
 	// Kubelet contains configuration settings for all kubelets of this worker pool.
+	// If set, all `spec.kubernetes.kubelet` settings will be overwritten for this worker pool (no merge of settings).
 	// +optional
 	Kubelet *KubeletConfig `json:"kubelet,omitempty" protobuf:"bytes,1,opt,name=kubelet"`
 }

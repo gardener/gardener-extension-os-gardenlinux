@@ -36,21 +36,29 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - configmaps
   - events
   verbs:
   - create
 - apiGroups:
   - ""
+  - coordination.k8s.io
   resources:
   - configmaps
+  - leases
+  verbs:
+  - create
+- apiGroups:
+  - ""
+  - coordination.k8s.io
+  resources:
+  - configmaps
+  - leases
   resourceNames:
   - gardenlinux-leader-election
   verbs:
   - get
   - watch
   - update
-  - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

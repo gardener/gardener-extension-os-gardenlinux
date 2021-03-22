@@ -19,15 +19,16 @@ import (
 	"os"
 
 	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator"
+
 	extcontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	controllercmd "github.com/gardener/gardener/extensions/pkg/controller/cmd"
 	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon"
 	oscommoncmd "github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/cmd"
 	"github.com/gardener/gardener/extensions/pkg/util"
-	"github.com/gardener/gardener/pkg/client/kubernetes/utils"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	componentbaseconfig "k8s.io/component-base/config"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
@@ -82,9 +83,9 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 			}, restOpts.Completed().Config)
 
 			completedMgrOpts := mgrOpts.Completed().Options()
-			completedMgrOpts.NewClient = utils.NewClientFuncWithDisabledCacheFor(
+			completedMgrOpts.ClientDisableCacheFor = []client.Object{
 				&corev1.Secret{}, // applied for OperatingSystemConfig Secret references
-			)
+			}
 
 			mgr, err := manager.New(restOpts.Completed().Config, completedMgrOpts)
 			if err != nil {
@@ -103,7 +104,7 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 				controllercmd.LogErrAndExit(err, "Could not add controller to manager")
 			}
 
-			if err := mgr.Start(ctx.Done()); err != nil {
+			if err := mgr.Start(ctx); err != nil {
 				controllercmd.LogErrAndExit(err, "Error running manager")
 			}
 		},
