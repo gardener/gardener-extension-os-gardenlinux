@@ -6,6 +6,12 @@ cat << EOF | base64 -d > '{{ .Path }}'
 EOF
 {{- end -}}
 
+{{- define "put-content-unencoded" -}}
+cat << EOF > '{{ .Path }}'
+{{ .Content }}
+EOF
+{{- end -}}
+
 {{ if and (isContainerDEnabled .CRI) .Bootstrap }}
 mkdir -p /etc/systemd/system/containerd.service.d
 cat <<EOF > /etc/systemd/system/containerd.service.d/11-exec_config.conf
@@ -18,7 +24,11 @@ chmod 0644 /etc/systemd/system/containerd.service.d/11-exec_config.conf
 
 {{ range $_, $file := .Files -}}
 mkdir -p '{{ $file.Dirname }}'
+{{ if $file.TransmitUnencoded -}}
+{{ template "put-content-unencoded" $file }}
+{{- else -}}
 {{ template "put-content" $file }}
+{{- end }}
 {{ if $file.Permissions -}}
 chmod '{{ $file.Permissions }}' '{{ $file.Path }}'
 {{ end }}
