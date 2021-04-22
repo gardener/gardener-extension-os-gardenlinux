@@ -15,9 +15,10 @@
 package generator
 
 import (
+	"embed"
+
 	ostemplate "github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/template"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
-	"github.com/gobuffalo/packr/v2"
 	"k8s.io/apimachinery/pkg/util/runtime"
 )
 
@@ -28,14 +29,14 @@ func additionalValues(*extensionsv1alpha1.OperatingSystemConfig) (map[string]int
 	return nil, nil
 }
 
-//go:generate packr2
+//go:embed templates/*
+var templates embed.FS
 
 func init() {
-	box := packr.New("templates", "./templates")
-	cloudInitTemplateString, err := box.FindString("cloud-init.gardenlinux.template")
+	cloudInitTemplateString, err := templates.ReadFile("templates/cloud-init.gardenlinux.template")
 	runtime.Must(err)
 
-	cloudInitTemplate, err := ostemplate.NewTemplate("cloud-init").Parse(cloudInitTemplateString)
+	cloudInitTemplate, err := ostemplate.NewTemplate("cloud-init").Parse(string(cloudInitTemplateString))
 	runtime.Must(err)
 	cloudInitGenerator = ostemplate.NewCloudInitGenerator(cloudInitTemplate, ostemplate.DefaultUnitsPath, cmd, additionalValues)
 }

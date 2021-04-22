@@ -16,11 +16,11 @@ package generator_test
 
 import (
 	gardenlinux_generator "github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator"
+	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator/testfiles"
 
 	commongen "github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/generator"
 	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/generator/test"
 	"github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
-	"github.com/gobuffalo/packr"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -88,12 +88,11 @@ dataKey: token`)
 var _ = Describe("Garden Linux OS Generator Test", func() {
 
 	Describe("Conformance Tests", func() {
-		var box = packr.NewBox("./testfiles")
 		g := gardenlinux_generator.CloudInitGenerator()
-		test.DescribeTest(gardenlinux_generator.CloudInitGenerator(), box)()
+		test.DescribeTest(gardenlinux_generator.CloudInitGenerator(), testfiles.Files)()
 
 		It("[docker] [bootstrap] should render correctly ", func() {
-			expectedCloudInit, err := box.Find("docker-bootstrap")
+			expectedCloudInit, err := testfiles.Files.ReadFile("docker-bootstrap")
 			Expect(err).NotTo(HaveOccurred())
 
 			osc.Bootstrap = true
@@ -106,7 +105,7 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 		})
 
 		It("[docker] [reconcile] should render correctly", func() {
-			expectedCloudInit, err := box.Find("docker-reconcile")
+			expectedCloudInit, err := testfiles.Files.ReadFile("docker-reconcile")
 			Expect(err).NotTo(HaveOccurred())
 
 			osc.Bootstrap = false
@@ -119,7 +118,7 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 		})
 
 		It("[containerd] [bootstrap] should render correctly", func() {
-			expectedCloudInit, err := box.Find("containerd-bootstrap")
+			expectedCloudInit, err := testfiles.Files.ReadFile("containerd-bootstrap")
 			Expect(err).NotTo(HaveOccurred())
 
 			osc.Bootstrap = true
@@ -132,7 +131,7 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 		})
 
 		It("[containerd] [reconcile] should render correctly bootstrap", func() {
-			expectedCloudInit, err := box.Find("containerd-reconcile")
+			expectedCloudInit, err := testfiles.Files.ReadFile("containerd-reconcile")
 			Expect(err).NotTo(HaveOccurred())
 
 			osc.Bootstrap = false
