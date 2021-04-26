@@ -323,6 +323,12 @@ type ManagedSeedControllerConfiguration struct {
 	// events.
 	// +optional
 	ConcurrentSyncs *int `json:"concurrentSyncs,omitempty"`
+	// SyncPeriod is the duration how often the existing resources are reconciled.
+	// +optional
+	SyncPeriod *metav1.Duration `json:"syncPeriod,omitempty"`
+	// WaitSyncPeriod is the duration how often an existing resource is reconciled when the controller is waiting for an event.
+	// +optional
+	WaitSyncPeriod *metav1.Duration `json:"waitSyncPeriod,omitempty"`
 	// SyncJitterPeriod is a jitter duration for the reconciler sync that can be used to distribute the syncs randomly.
 	// If its value is greater than 0 then the managed seeds will not be enqueued immediately but only after a random
 	// duration between 0 and the configured value. It is defaulted to 5m.
@@ -374,11 +380,26 @@ type FluentBit struct {
 	OutputSection *string `json:"output,omitempty" yaml:"output,omitempty"`
 }
 
+// Loki contains configuration for the Loki.
+type Loki struct {
+	// Garden contains configuration for the Loki in garden namespace.
+	Garden *GardenLoki `json:"garden,omitempty" yaml:"garden,omitempty"`
+}
+
+// GardenLoki contains configuration for the Loki in garden namespace.
+type GardenLoki struct {
+	// Priority is the priority value for the Loki
+	Priority *int `json:"priority,omitempty" yaml:"priority,omitempty"`
+}
+
 // Logging contains configuration for the logging stack.
 type Logging struct {
 	// FluentBit contains configurations for the fluent-bit
 	// +optional
 	FluentBit *FluentBit `json:"fluentBit,omitempty" yaml:"fluentBit,omitempty"`
+	// Loki contains configuration for the Loki
+	// +optional
+	Loki *Loki `json:"loki,omitempty" yaml:"loki,omitempty"`
 }
 
 // ServerConfiguration contains details for the HTTP(S) servers.

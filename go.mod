@@ -1,13 +1,11 @@
 module github.com/gardener/gardener-extension-os-gardenlinux
 
-go 1.15
+go 1.16
 
 require (
 	github.com/ahmetb/gen-crd-api-reference-docs v0.2.0
-	github.com/gardener/gardener v1.19.1
-	github.com/gobuffalo/packr v1.30.1
-	github.com/gobuffalo/packr/v2 v2.5.1
-	github.com/onsi/ginkgo v1.14.1
+	github.com/gardener/gardener v1.21.0
+	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.5
 	github.com/spf13/cobra v1.1.1
 	k8s.io/api v0.20.2

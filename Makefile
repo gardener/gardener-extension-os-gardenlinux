@@ -59,7 +59,6 @@ docker-images:
 
 .PHONY: install-requirements
 install-requirements:
-	@go install -mod=vendor $(REPO_ROOT)/vendor/github.com/gobuffalo/packr/v2/packr2
 	@go install -mod=vendor $(REPO_ROOT)/vendor/github.com/onsi/ginkgo/ginkgo
 	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/install-requirements.sh
 	@$(REPO_ROOT)/hack/update-github-templates.sh
