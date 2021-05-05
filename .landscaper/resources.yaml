@@ -1,0 +1,18 @@
+---
+  type: landscaper.gardener.cloud/blueprint
+  name: os-gardenlinux-controller-registration
+  relation: local
+  input:
+    type: "dir"
+    path: "./blueprint"
+    compress: true
+    mediaType: "application/vnd.gardener.landscaper.blueprint.v1+tar+gzip"
+---
+type: helm.io/chart
+name: os-gardenlinux-chart
+relation: local
+input:
+  type: "dir"
+  path: "../charts/gardener-extension-os-gardenlinux"
+  compress: true
+---
