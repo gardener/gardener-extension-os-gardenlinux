@@ -3,15 +3,17 @@ module github.com/gardener/gardener-extension-os-gardenlinux
 go 1.16
 
 require (
+	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/ahmetb/gen-crd-api-reference-docs v0.2.0
-	github.com/gardener/gardener v1.21.0
+	github.com/gardener/gardener v1.23.1-0.20210518154436-970ae9649ed7
+	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.5
 	github.com/spf13/cobra v1.1.1
-	k8s.io/api v0.20.2
-	k8s.io/apimachinery v0.20.2
-	k8s.io/code-generator v0.20.2
-	k8s.io/component-base v0.20.2
+	k8s.io/api v0.20.6
+	k8s.io/apimachinery v0.20.6
+	k8s.io/code-generator v0.20.6
+	k8s.io/component-base v0.20.6
 	sigs.k8s.io/controller-runtime v0.8.3
 )
 
