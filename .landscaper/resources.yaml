@@ -15,4 +15,5 @@ input:
   type: "dir"
   path: "../charts/gardener-extension-os-gardenlinux"
   compress: true
+  preserveDir: true
 ---

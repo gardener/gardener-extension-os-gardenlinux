@@ -5,7 +5,7 @@ deployItems:
     name: {{ .imports.cluster.metadata.name }}
     namespace: {{ .imports.cluster.metadata.namespace }}
   config:
-    apiVersion: manifest.deployer.landscaper.gardener.cloud/v1alpha1
+    apiVersion: manifest.deployer.landscaper.gardener.cloud/v1alpha2
     kind: ProviderConfiguration
 
     updateStrategy: patch
