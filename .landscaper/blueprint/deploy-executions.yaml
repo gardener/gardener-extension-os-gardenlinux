@@ -11,26 +11,28 @@ deployItems:
     updateStrategy: patch
 
     manifests:
-      - apiVersion: core.gardener.cloud/v1beta1
-        kind: ControllerRegistration
-        metadata:
-          name: os-gardenlinux
-        spec:
-          resources:
-          - kind: OperatingSystemConfig
-            type: gardenlinux
-          deployment:
-            type: helm
-            providerConfig:
-              {{- $chart := getResource .cd "name" "os-gardenlinux-chart" }}
-              chart: {{ resolve ( $chart.access ) | toString | b64enc }}
-              values:
-                image:
-                  {{- $image := getResource .cd "name" "gardener-extension-os-gardenlinux" }}
-                  repository: {{ ociRefRepo ( $image.access.imageReference ) }}
-                  tag: {{ ociRefVersion ( $image.access.imageReference ) }}
-                {{- if .imports.chartValues }}
-                {{- $values := .imports.chartValues }}
-                {{- $values = unset $values "image" }}
-                {{- toYaml $values | nindent 16 }}
-                {{- end }}
+      - policy: manage
+        manifest:
+          apiVersion: core.gardener.cloud/v1beta1
+          kind: ControllerRegistration
+          metadata:
+            name: os-gardenlinux
+          spec:
+            resources:
+            - kind: OperatingSystemConfig
+              type: gardenlinux
+            deployment:
+              type: helm
+              providerConfig:
+                {{- $chart := getResource .cd "name" "os-gardenlinux-chart" }}
+                chart: {{ resolve ( $chart.access ) | toString | b64enc }}
+                values:
+                  image:
+                    {{- $image := getResource .cd "name" "gardener-extension-os-gardenlinux" }}
+                    repository: {{ ociRefRepo ( $image.access.imageReference ) }}
+                    tag: {{ ociRefVersion ( $image.access.imageReference ) }}
+                  {{- if .imports.chartValues }}
+                  {{- $values := .imports.chartValues }}
+                  {{- $values = unset $values "image" }}
+                  {{- toYaml $values | nindent 18 }}
+                  {{- end }}
