@@ -20,7 +20,7 @@ spec:
     ...
 ```
 
-Please find [a concrete example](example/operatingsystemconfig.yaml) in the `example` folder.
+Please find [a concrete example](example/40-operatingsystemconfig.yaml) in the `example` folder.
 
 After reconciliation the resulting data will be stored in a secret within the same namespace (as the config itself might contain confidential data). The name of the secret will be written into the resource's `.status` field:
 
