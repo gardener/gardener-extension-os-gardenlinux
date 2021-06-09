@@ -39,7 +39,7 @@ github.com/gardener/etcd-druid/api/v1alpha1
 # github.com/gardener/external-dns-management v0.7.18
 github.com/gardener/external-dns-management/pkg/apis/dns
 github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1
-# github.com/gardener/gardener v1.23.1-0.20210518154436-970ae9649ed7
+# github.com/gardener/gardener v1.24.1-0.20210609080620-7f7fbf24575c
 ## explicit
 github.com/gardener/gardener/.github
 github.com/gardener/gardener/.github/ISSUE_TEMPLATE
@@ -63,6 +63,8 @@ github.com/gardener/gardener/hack/.ci
 github.com/gardener/gardener/hack/api-reference/template
 github.com/gardener/gardener/pkg/api/core
 github.com/gardener/gardener/pkg/api/extensions
+github.com/gardener/gardener/pkg/apis/authentication
+github.com/gardener/gardener/pkg/apis/authentication/v1alpha1
 github.com/gardener/gardener/pkg/apis/core
 github.com/gardener/gardener/pkg/apis/core/install
 github.com/gardener/gardener/pkg/apis/core/v1alpha1
@@ -76,7 +78,7 @@ github.com/gardener/gardener/pkg/apis/extensions/v1alpha1
 github.com/gardener/gardener/pkg/apis/operations
 github.com/gardener/gardener/pkg/apis/operations/v1alpha1
 github.com/gardener/gardener/pkg/apis/seedmanagement
-github.com/gardener/gardener/pkg/apis/seedmanagement/helper
+github.com/gardener/gardener/pkg/apis/seedmanagement/encoding
 github.com/gardener/gardener/pkg/apis/seedmanagement/v1alpha1
 github.com/gardener/gardener/pkg/apis/settings
 github.com/gardener/gardener/pkg/apis/settings/v1alpha1
@@ -90,7 +92,9 @@ github.com/gardener/gardener/pkg/client/core/listers/core/v1beta1
 github.com/gardener/gardener/pkg/client/extensions/clientset/versioned/scheme
 github.com/gardener/gardener/pkg/client/kubernetes
 github.com/gardener/gardener/pkg/client/kubernetes/cache
+github.com/gardener/gardener/pkg/client/operations/clientset/versioned
 github.com/gardener/gardener/pkg/client/operations/clientset/versioned/scheme
+github.com/gardener/gardener/pkg/client/operations/clientset/versioned/typed/operations/v1alpha1
 github.com/gardener/gardener/pkg/client/seedmanagement/clientset/versioned
 github.com/gardener/gardener/pkg/client/seedmanagement/clientset/versioned/scheme
 github.com/gardener/gardener/pkg/client/seedmanagement/clientset/versioned/typed/seedmanagement/v1alpha1
@@ -454,12 +458,14 @@ gopkg.in/yaml.v3
 # istio.io/api v0.0.0-20201123152548-197f11e4ea09
 istio.io/api/analysis/v1alpha1
 istio.io/api/meta/v1alpha1
+istio.io/api/networking/v1alpha3
 istio.io/api/networking/v1beta1
 # istio.io/client-go v1.8.1
+istio.io/client-go/pkg/apis/networking/v1alpha3
 istio.io/client-go/pkg/apis/networking/v1beta1
 # istio.io/gogo-genproto v0.0.0-20190930162913-45029607206a
 istio.io/gogo-genproto/googleapis/google/api
-# k8s.io/api v0.20.6 => k8s.io/api v0.20.6
+# k8s.io/api v0.20.7 => k8s.io/api v0.20.7
 ## explicit
 k8s.io/api/admission/v1
 k8s.io/api/admission/v1beta1
@@ -506,7 +512,7 @@ k8s.io/api/scheduling/v1beta1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apiextensions-apiserver v0.20.6 => k8s.io/apiextensions-apiserver v0.20.6
+# k8s.io/apiextensions-apiserver v0.20.7 => k8s.io/apiextensions-apiserver v0.20.7
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1
@@ -514,7 +520,7 @@ k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1
-# k8s.io/apimachinery v0.20.6 => k8s.io/apimachinery v0.20.6
+# k8s.io/apimachinery v0.20.7 => k8s.io/apimachinery v0.20.7
 ## explicit
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/api/errors
@@ -567,11 +573,11 @@ k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/netutil
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/apiserver v0.20.6
+# k8s.io/apiserver v0.20.7
 k8s.io/apiserver/pkg/authentication/user
 # k8s.io/autoscaler v0.0.0-20190805135949-100e91ba756e
 k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1beta2
-# k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible => k8s.io/client-go v0.20.6
+# k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible => k8s.io/client-go v0.20.7
 k8s.io/client-go/discovery
 k8s.io/client-go/dynamic
 k8s.io/client-go/kubernetes
@@ -653,10 +659,10 @@ k8s.io/client-go/util/homedir
 k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/retry
 k8s.io/client-go/util/workqueue
-# k8s.io/cluster-bootstrap v0.20.6
+# k8s.io/cluster-bootstrap v0.20.7
 k8s.io/cluster-bootstrap/token/api
 k8s.io/cluster-bootstrap/token/util
-# k8s.io/code-generator v0.20.6 => k8s.io/code-generator v0.20.6
+# k8s.io/code-generator v0.20.7 => k8s.io/code-generator v0.20.7
 ## explicit
 k8s.io/code-generator
 k8s.io/code-generator/cmd/client-gen
@@ -692,7 +698,7 @@ k8s.io/code-generator/cmd/set-gen
 k8s.io/code-generator/pkg/namer
 k8s.io/code-generator/pkg/util
 k8s.io/code-generator/third_party/forked/golang/reflect
-# k8s.io/component-base v0.20.6 => k8s.io/component-base v0.20.6
+# k8s.io/component-base v0.20.7 => k8s.io/component-base v0.20.7
 ## explicit
 k8s.io/component-base/config
 k8s.io/component-base/config/v1alpha1
@@ -724,7 +730,7 @@ k8s.io/helm/pkg/version
 k8s.io/klog
 # k8s.io/klog/v2 v2.4.0
 k8s.io/klog/v2
-# k8s.io/kube-aggregator v0.20.6
+# k8s.io/kube-aggregator v0.20.7
 k8s.io/kube-aggregator/pkg/apis/apiregistration
 k8s.io/kube-aggregator/pkg/apis/apiregistration/v1
 k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1
@@ -805,10 +811,10 @@ sigs.k8s.io/controller-tools/pkg/webhook
 sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
 sigs.k8s.io/yaml
-# k8s.io/api => k8s.io/api v0.20.6
-# k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.20.6
-# k8s.io/apimachinery => k8s.io/apimachinery v0.20.6
-# k8s.io/client-go => k8s.io/client-go v0.20.6
-# k8s.io/code-generator => k8s.io/code-generator v0.20.6
-# k8s.io/component-base => k8s.io/component-base v0.20.6
+# k8s.io/api => k8s.io/api v0.20.7
+# k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.20.7
+# k8s.io/apimachinery => k8s.io/apimachinery v0.20.7
+# k8s.io/client-go => k8s.io/client-go v0.20.7
+# k8s.io/code-generator => k8s.io/code-generator v0.20.7
+# k8s.io/component-base => k8s.io/component-base v0.20.7
 # k8s.io/helm => k8s.io/helm v2.13.1+incompatible
