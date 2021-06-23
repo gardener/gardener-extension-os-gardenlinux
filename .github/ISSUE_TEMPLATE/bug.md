@@ -18,7 +18,7 @@ If multiple identifiers make sense you can also state the commands multiple time
 "/kind" identifiers:     api-change|bug|cleanup|discussion|enhancement|epic|impediment|poc|post-mortem|question|regression|task|technical-debt|test
 "/priority" identifiers: 1|2|3|4|5 (ordered from greatest to least)
 -->
-/area TODO
+/area os
 /kind bug
 /priority 3
 /os garden-linux
