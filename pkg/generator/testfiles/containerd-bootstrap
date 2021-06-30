@@ -34,6 +34,4 @@ nslookup $(hostname) || systemctl restart systemd-networkd
 systemctl daemon-reload
 systemctl enable containerd && systemctl restart containerd
 systemctl enable docker && systemctl restart docker
-systemctl enable 'unit1' && systemctl restart 'unit1'
-systemctl enable 'unit2' && systemctl restart 'unit2'
-systemctl enable 'cloud-config-downloader.service' && systemctl restart 'cloud-config-downloader.service'
+systemctl enable cloud-config-downloader && systemctl restart cloud-config-downloader
