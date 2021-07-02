@@ -7,24 +7,15 @@
 set -e
 
 SOURCE_PATH="$(dirname $0)/.."
-IMAGE_REGISTRY="$(${SOURCE_PATH}/hack/get-image-registry.sh)"
-CD_REGISTRY="$(${SOURCE_PATH}/hack/get-cd-registry.sh)"
-COMPONENT_NAME="$(${SOURCE_PATH}/hack/get-cd-component-name.sh)"
+source "${SOURCE_PATH}/hack/environment.sh"
+
+IMAGE_REGISTRY=$(get_image_registry)
+CD_REGISTRY=$(get_cd_registry)
+COMPONENT_NAME=$(get_cd_component_name)
 
 CA_PATH="$(mktemp -d)"
 TMP_COMPONENT_DESCRIPTOR_PATH="${CA_PATH}/component-descriptor.yaml"
 
-if ! which component-cli 1>/dev/null; then
-  echo -n "component-cli is required to generate the component descriptors"
-  echo -n "Trying to installing it..."
-  go get github.com/gardener/component-cli/cmd/component-cli
-
-  if ! which component-cli 1>/dev/null; then
-    echo -n "component-cli was successfully installed but the binary cannot be found"
-    echo -n "Try adding the \$GOPATH/bin to your \$PATH..."
-    exit 1
-  fi
-fi
 if ! which jq 1>/dev/null; then
   echo -n "jq canot be found"
   exit 1

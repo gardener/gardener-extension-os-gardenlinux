@@ -24,7 +24,6 @@ LEADER_ELECTION             := false
 IGNORE_OPERATION_ANNOTATION := true
 
 EFFECTIVE_VERSION           := $(VERSION)-$(shell git rev-parse HEAD)
-CNUDIE_IMAGE_REGISTRY       := $(shell "$(HACK_DIR)/get-image-registry.sh")
 
 #########################################
 # Rules for local development scenarios #
@@ -65,6 +64,7 @@ install-requirements:
 	@go install -mod=vendor $(REPO_ROOT)/vendor/github.com/onsi/ginkgo/ginkgo
 	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/install-requirements.sh
 	@$(REPO_ROOT)/hack/update-github-templates.sh
+	@go get github.com/gardener/component-cli/cmd/component-cli
 
 .PHONY: revendor
 revendor:
@@ -119,14 +119,14 @@ verify-extended: install-requirements check-generate check format test-cov test-
 
 .PHONY: cnudie-docker-images
 cnudie-docker-images:
-	@echo "Building docker images for version $(EFFECTIVE_VERSION) for registry $(CNUDIE_IMAGE_REGISTRY)"
-	@docker build -t $(CNUDIE_IMAGE_REGISTRY)/$(NAME):$(EFFECTIVE_VERSION) -f Dockerfile .
+	@echo "Building docker images for version $(EFFECTIVE_VERSION) for registry $(IMAGE_PREFIX)"
+	@docker build -t $(IMAGE_PREFIX)/$(NAME):$(EFFECTIVE_VERSION) -f Dockerfile .
 
 .PHONY: cnudie-docker-push
 cnudie-docker-push:
-	@echo "Pushing docker images for version $(EFFECTIVE_VERSION) to registry $(CNUDIE_IMAGE_REGISTRY)"
-	@if ! docker images $(CNUDIE_IMAGE_REGISTRY)/$(NAME) | awk '{ print $$2 }' | grep -q -F $(EFFECTIVE_VERSION); then echo "$(CNUDIE_IMAGE_REGISTRY)/$(NAME) version $(EFFECTIVE_VERSION) is not yet built. Please run 'make cnudie-docker-images'"; false; fi
-	@docker push $(CNUDIE_IMAGE_REGISTRY)/$(NAME):$(EFFECTIVE_VERSION)
+	@echo "Pushing docker images for version $(EFFECTIVE_VERSION) to registry $(IMAGE_PREFIX)"
+	@if ! docker images $(IMAGE_PREFIX)/$(NAME) | awk '{ print $$2 }' | grep -q -F $(EFFECTIVE_VERSION); then echo "$(IMAGE_PREFIX)/$(NAME) version $(EFFECTIVE_VERSION) is not yet built. Please run 'make cnudie-docker-images'"; false; fi
+	@docker push $(IMAGE_PREFIX)/$(NAME):$(EFFECTIVE_VERSION)
 
 
 .PHONY: cnudie-cd-build-push
