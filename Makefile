@@ -23,8 +23,6 @@ LD_FLAGS                    := "-w -X github.com/gardener/$(EXTENSION_PREFIX)-$(
 LEADER_ELECTION             := false
 IGNORE_OPERATION_ANNOTATION := true
 
-EFFECTIVE_VERSION           := $(VERSION)-$(shell git rev-parse HEAD)
-
 #########################################
 # Rules for local development scenarios #
 #########################################
@@ -63,8 +61,6 @@ docker-images:
 install-requirements:
 	@go install -mod=vendor $(REPO_ROOT)/vendor/github.com/onsi/ginkgo/ginkgo
 	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/install-requirements.sh
-	@$(REPO_ROOT)/hack/update-github-templates.sh
-	@go get github.com/gardener/component-cli/cmd/component-cli
 
 .PHONY: revendor
 revendor:
@@ -72,6 +68,7 @@ revendor:
 	@GO111MODULE=on go mod tidy
 	@chmod +x $(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/*
 	@chmod +x $(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/.ci/*
+	@$(REPO_ROOT)/hack/update-github-templates.sh
 
 .PHONY: clean
 clean:
@@ -112,27 +109,3 @@ verify: check format test
 
 .PHONY: verify-extended
 verify-extended: install-requirements check-generate check format test-cov test-clean
-
-#####################################################################
-# Rules for cnudie component descriptors dev setup #
-#####################################################################
-
-.PHONY: cnudie-docker-images
-cnudie-docker-images:
-	@echo "Building docker images for version $(EFFECTIVE_VERSION) for registry $(IMAGE_PREFIX)"
-	@docker build -t $(IMAGE_PREFIX)/$(NAME):$(EFFECTIVE_VERSION) -f Dockerfile .
-
-.PHONY: cnudie-docker-push
-cnudie-docker-push:
-	@echo "Pushing docker images for version $(EFFECTIVE_VERSION) to registry $(IMAGE_PREFIX)"
-	@if ! docker images $(IMAGE_PREFIX)/$(NAME) | awk '{ print $$2 }' | grep -q -F $(EFFECTIVE_VERSION); then echo "$(IMAGE_PREFIX)/$(NAME) version $(EFFECTIVE_VERSION) is not yet built. Please run 'make cnudie-docker-images'"; false; fi
-	@docker push $(IMAGE_PREFIX)/$(NAME):$(EFFECTIVE_VERSION)
-
-
-.PHONY: cnudie-cd-build-push
-cnudie-cd-build-push:
-	@EFFECTIVE_VERSION=$(EFFECTIVE_VERSION) ./hack/generate-cd.sh
-
-.PHONY: cnudie-create-installation
-cnudie-create-installation:
-	@EFFECTIVE_VERSION=$(EFFECTIVE_VERSION) ./hack/create-installation.sh
