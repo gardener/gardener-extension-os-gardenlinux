@@ -27,6 +27,7 @@ import (
 	"github.com/gardener/gardener/extensions/pkg/util"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	componentbaseconfig "k8s.io/component-base/config"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -47,9 +48,10 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 	var (
 		restOpts = &controllercmd.RESTOptions{}
 		mgrOpts  = &controllercmd.ManagerOptions{
-			LeaderElection:          true,
-			LeaderElectionID:        controllercmd.LeaderElectionNameID(ctrlName),
-			LeaderElectionNamespace: os.Getenv("LEADER_ELECTION_NAMESPACE"),
+			LeaderElection:             true,
+			LeaderElectionResourceLock: resourcelock.LeasesResourceLock,
+			LeaderElectionID:           controllercmd.LeaderElectionNameID(ctrlName),
+			LeaderElectionNamespace:    os.Getenv("LEADER_ELECTION_NAMESPACE"),
 		}
 		ctrlOpts = &controllercmd.ControllerOptions{
 			MaxConcurrentReconciles: 5,
