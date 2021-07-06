@@ -1,6 +1,6 @@
 ---
   type: landscaper.gardener.cloud/blueprint
-  name: os-gardenlinux-controller-registration
+  name: os-gardenlinux-controller-deployment
   relation: local
   input:
     type: "dir"
