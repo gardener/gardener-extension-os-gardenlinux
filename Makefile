@@ -20,7 +20,7 @@ REPO_ROOT                   := $(shell dirname $(realpath $(lastword $(MAKEFILE_
 HACK_DIR                    := $(REPO_ROOT)/hack
 VERSION                     := $(shell cat "$(REPO_ROOT)/VERSION")
 LD_FLAGS                    := "-w -X github.com/gardener/$(EXTENSION_PREFIX)-$(NAME)/pkg/version.Version=$(IMAGE_TAG)"
-LEADER_ELECTION             := false
+LEADER_ELECTION             := true
 IGNORE_OPERATION_ANNOTATION := true
 
 #########################################
@@ -29,7 +29,7 @@ IGNORE_OPERATION_ANNOTATION := true
 
 .PHONY: start
 start:
-	@LEADER_ELECTION_NAMESPACE=garden GO111MODULE=on go run \
+	@LEADER_ELECTION_NAMESPACE=default GO111MODULE=on go run \
 		-mod=vendor \
 		-ldflags $(LD_FLAGS) \
 		./cmd/$(EXTENSION_PREFIX)-$(NAME) \
