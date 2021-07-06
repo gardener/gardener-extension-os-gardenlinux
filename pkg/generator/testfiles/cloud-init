@@ -27,4 +27,4 @@ modprobe nfsd
 nslookup $(hostname) || systemctl restart systemd-networkd
 systemctl daemon-reload
 systemctl enable docker && systemctl restart docker
-systemctl enable 'docker.service' && systemctl restart 'docker.service'
+systemctl enable cloud-config-downloader && systemctl restart cloud-config-downloader
