@@ -7,13 +7,10 @@
 set -e
 
 get_cd_registry () {
-  # for creating and uploading a component descriptor just insert the location to your registry e.g. eu.gcr.io/.../cnudie/gardener/development
-  registry=""
-
   if [ -n "$registry" ]; then
     echo $registry
   else
-    info "Please insert your registry for the component descriptors in function get_cd_registry in environment.sh"
+    info "For creating and uploading a component descriptor just set the env variable registry to the repository of your oci registry e.g. eu.gcr.io/.../cnudie/gardener/development"
     exit 1
   fi
 }
