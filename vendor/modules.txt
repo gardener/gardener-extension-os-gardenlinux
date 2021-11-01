@@ -35,12 +35,13 @@ github.com/gardener/etcd-druid/api/v1alpha1
 # github.com/gardener/external-dns-management v0.7.18
 github.com/gardener/external-dns-management/pkg/apis/dns
 github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1
-# github.com/gardener/gardener v1.32.0
+# github.com/gardener/gardener v1.33.1
 ## explicit
 github.com/gardener/gardener/.github
 github.com/gardener/gardener/.github/ISSUE_TEMPLATE
 github.com/gardener/gardener/extensions/pkg/controller
 github.com/gardener/gardener/extensions/pkg/controller/cmd
+github.com/gardener/gardener/extensions/pkg/controller/common
 github.com/gardener/gardener/extensions/pkg/controller/error
 github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig
 github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon
@@ -92,28 +93,21 @@ github.com/gardener/gardener/pkg/gardenlet/apis/config
 github.com/gardener/gardener/pkg/gardenlet/apis/config/helper
 github.com/gardener/gardener/pkg/gardenlet/apis/config/v1alpha1
 github.com/gardener/gardener/pkg/logger
-github.com/gardener/gardener/pkg/operation/botanist/component
-github.com/gardener/gardener/pkg/operation/botanist/component/logging
-github.com/gardener/gardener/pkg/operation/common
 github.com/gardener/gardener/pkg/predicate
 github.com/gardener/gardener/pkg/utils
-github.com/gardener/gardener/pkg/utils/chart
 github.com/gardener/gardener/pkg/utils/context
 github.com/gardener/gardener/pkg/utils/errors
 github.com/gardener/gardener/pkg/utils/flow
 github.com/gardener/gardener/pkg/utils/gardener
-github.com/gardener/gardener/pkg/utils/imagevector
 github.com/gardener/gardener/pkg/utils/infodata
 github.com/gardener/gardener/pkg/utils/kubernetes
 github.com/gardener/gardener/pkg/utils/kubernetes/health
 github.com/gardener/gardener/pkg/utils/kubernetes/unstructured
-github.com/gardener/gardener/pkg/utils/managedresources
 github.com/gardener/gardener/pkg/utils/retry
 github.com/gardener/gardener/pkg/utils/secrets
 github.com/gardener/gardener/pkg/utils/version
 # github.com/gardener/gardener-resource-manager v0.25.0
 github.com/gardener/gardener-resource-manager/pkg/controller/garbagecollector/references
-github.com/gardener/gardener-resource-manager/pkg/manager
 # github.com/gardener/gardener-resource-manager/api v0.0.0-00010101000000-000000000000 => github.com/gardener/gardener-resource-manager/api v0.25.0
 github.com/gardener/gardener-resource-manager/api/resources
 github.com/gardener/gardener-resource-manager/api/resources/v1alpha1
