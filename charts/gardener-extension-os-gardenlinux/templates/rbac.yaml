@@ -14,13 +14,21 @@ rules:
   - clusters
   - operatingsystemconfigs
   - operatingsystemconfigs/status
-  - operatingsystemconfigs/finalizers  
+  - operatingsystemconfigs/finalizers
   verbs:
   - get
   - list
   - watch
   - patch
   - update
+- apiGroups:
+  - extensions.gardener.cloud
+  resources:
+  - dnsrecords
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - ""
   resources:
