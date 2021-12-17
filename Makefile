@@ -34,7 +34,8 @@ start:
 		-ldflags $(LD_FLAGS) \
 		./cmd/$(EXTENSION_PREFIX)-$(NAME) \
 		--leader-election=$(LEADER_ELECTION) \
-		--ignore-operation-annotation=$(IGNORE_OPERATION_ANNOTATION)
+		--ignore-operation-annotation=$(IGNORE_OPERATION_ANNOTATION) \
+		--gardener-version="v1.39.0"
 
 #################################################################
 # Rules related to binary build, Docker image build and release #

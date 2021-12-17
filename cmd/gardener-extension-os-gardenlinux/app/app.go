@@ -46,8 +46,9 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 	}
 
 	var (
-		restOpts = &controllercmd.RESTOptions{}
-		mgrOpts  = &controllercmd.ManagerOptions{
+		generalOpts = &controllercmd.GeneralOptions{}
+		restOpts    = &controllercmd.RESTOptions{}
+		mgrOpts     = &controllercmd.ManagerOptions{
 			LeaderElection:             true,
 			LeaderElectionResourceLock: resourcelock.LeasesResourceLock,
 			LeaderElectionID:           controllercmd.LeaderElectionNameID(ctrlName),
@@ -62,6 +63,7 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 		controllerSwitches = oscommoncmd.SwitchOptions(ctrlName, osTypes, g)
 
 		aggOption = controllercmd.NewOptionAggregator(
+			generalOpts,
 			restOpts,
 			mgrOpts,
 			ctrlOpts,
