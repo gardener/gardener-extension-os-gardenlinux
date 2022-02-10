@@ -1,17 +1,4 @@
 #!/bin/bash
-if [ ! -s /etc/containerd/config.toml ]; then
-  mkdir -p /etc/containerd/
-  containerd config default > /etc/containerd/config.toml
-  chmod 0644 /etc/containerd/config.toml
-fi
-
-mkdir -p /etc/systemd/system/containerd.service.d
-cat <<EOF > /etc/systemd/system/containerd.service.d/11-exec_config.conf
-[Service]
-ExecStart=
-ExecStart=/usr/bin/containerd --config=/etc/containerd/config.toml
-EOF
-chmod 0644 /etc/systemd/system/containerd.service.d/11-exec_config.conf
 
 mkdir -p '/var/lib/kubelet'
 cat << EOF | base64 -d > '/var/lib/kubelet/ca.crt'
@@ -39,8 +26,7 @@ modprobe nfsd
 nslookup $(hostname) || systemctl restart systemd-networkd
 mkdir -p /var/lib/gardener-gardenlinux/etc
 systemctl daemon-reload
-systemctl enable containerd && systemctl restart containerd
-echo v2 > /var/lib/gardener-gardenlinux/etc/cgroup_version
+echo v1 > /var/lib/gardener-gardenlinux/etc/cgroup_version
 echo nftables > /var/lib/gardener-gardenlinux/etc/netfilter_backend
 echo AppArmor > /var/lib/gardener-gardenlinux/etc/lsm
 systemctl enable docker && systemctl restart docker

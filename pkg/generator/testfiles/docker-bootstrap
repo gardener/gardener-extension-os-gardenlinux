@@ -24,6 +24,10 @@ EOF
 grep -sq "^nfsd$" /etc/modules || echo "nfsd" >>/etc/modules
 modprobe nfsd
 nslookup $(hostname) || systemctl restart systemd-networkd
+mkdir -p /var/lib/gardener-gardenlinux/etc
 systemctl daemon-reload
+echo v2 > /var/lib/gardener-gardenlinux/etc/cgroup_version
+echo nftables > /var/lib/gardener-gardenlinux/etc/netfilter_backend
+echo AppArmor > /var/lib/gardener-gardenlinux/etc/lsm
 systemctl enable docker && systemctl restart docker
 systemctl enable cloud-config-downloader && systemctl restart cloud-config-downloader

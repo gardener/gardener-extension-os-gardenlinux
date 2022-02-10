@@ -57,9 +57,19 @@ modprobe nfsd
 nslookup $(hostname) || systemctl restart systemd-networkd
 
 {{- if .Bootstrap }}
+mkdir -p /var/lib/gardener-gardenlinux/etc
 systemctl daemon-reload
 {{- if isContainerDEnabled .CRI }}
 systemctl enable containerd && systemctl restart containerd
+{{- end }}
+{{- if .AdditionalValues.cGroupVersion }}
+echo {{ .AdditionalValues.cGroupVersion }} > /var/lib/gardener-gardenlinux/etc/cgroup_version
+{{- end }}
+{{- if .AdditionalValues.NetFilterBackend }}
+echo {{ .AdditionalValues.NetFilterBackend }} > /var/lib/gardener-gardenlinux/etc/netfilter_backend
+{{- end }}
+{{- if .AdditionalValues.LinuxSecurityModule }}
+echo {{ .AdditionalValues.LinuxSecurityModule }} > /var/lib/gardener-gardenlinux/etc/lsm
 {{- end }}
 systemctl enable docker && systemctl restart docker
 systemctl enable cloud-config-downloader && systemctl restart cloud-config-downloader
