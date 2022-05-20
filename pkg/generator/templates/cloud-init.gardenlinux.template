@@ -56,11 +56,18 @@ grep -sq "^nfsd$" /etc/modules || echo "nfsd" >>/etc/modules
 modprobe nfsd
 nslookup $(hostname) || systemctl restart systemd-networkd
 
-{{- if .Bootstrap }}
 systemctl daemon-reload
+
+{{- if .Bootstrap }}
 {{- if isContainerDEnabled .CRI }}
 systemctl enable containerd && systemctl restart containerd
 {{- end }}
 systemctl enable docker && systemctl restart docker
 systemctl enable cloud-config-downloader && systemctl restart cloud-config-downloader
+{{- end }}
+
+{{- if not .Bootstrap }}
+{{- range $_, $unitname := .AdditionalValues.unitsToEnable }}
+systemctl enable {{ $unitname }} && systemctl restart {{ $unitname }}
+{{- end }}
 {{- end }}

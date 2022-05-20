@@ -1,4 +1,4 @@
-// Copyright (c) 2020 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+// Copyright (c) 2022 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/apis/gardenlinux"
 	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator"
 
 	extcontroller "github.com/gardener/gardener/extensions/pkg/controller"
@@ -36,14 +37,13 @@ import (
 )
 
 var (
-	ctrlName = "gardenlinux"
-	osTypes  = []string{"gardenlinux"}
+	osTypes = []string{"gardenlinux"}
 )
 
 // NewControllerCommand returns a new Command with a new Generator
 func NewControllerCommand(ctx context.Context) *cobra.Command {
-	g := generator.CloudInitGenerator()
-	if g == nil {
+	gardenLinuxGenerator := generator.CloudInitGenerator(ctx)
+	if gardenLinuxGenerator == nil {
 		runtimelog.Log.Error(fmt.Errorf("generator is nil"), "Error executing the main controller command")
 		os.Exit(1)
 	}
@@ -54,7 +54,7 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 		mgrOpts     = &controllercmd.ManagerOptions{
 			LeaderElection:             true,
 			LeaderElectionResourceLock: resourcelock.LeasesResourceLock,
-			LeaderElectionID:           controllercmd.LeaderElectionNameID(ctrlName),
+			LeaderElectionID:           controllercmd.LeaderElectionNameID(gardenlinux.Name),
 			LeaderElectionNamespace:    os.Getenv("LEADER_ELECTION_NAMESPACE"),
 		}
 		ctrlOpts = &controllercmd.ControllerOptions{
@@ -63,7 +63,7 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 
 		reconcileOpts = &controllercmd.ReconcilerOptions{}
 
-		controllerSwitches = oscommoncmd.SwitchOptions(ctrlName, osTypes, g)
+		controllerSwitches = oscommoncmd.SwitchOptions(gardenlinux.Name, osTypes, gardenLinuxGenerator)
 
 		aggOption = controllercmd.NewOptionAggregator(
 			generalOpts,
@@ -76,7 +76,7 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use: "os-" + ctrlName + "-controller-manager",
+		Use: "os-" + gardenlinux.Name + "-controller-manager",
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := aggOption.Complete(); err != nil {
@@ -106,6 +106,8 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 			ctrlOpts.Completed().Apply(&oscommon.DefaultAddOptions.Controller)
 
 			reconcileOpts.Completed().Apply(&oscommon.DefaultAddOptions.IgnoreOperationAnnotation)
+
+			generator.InjectClient(mgr.GetClient())
 
 			if err := controllerSwitches.Completed().AddToManager(mgr); err != nil {
 				return fmt.Errorf("could not add controller to manager: %w", err)
