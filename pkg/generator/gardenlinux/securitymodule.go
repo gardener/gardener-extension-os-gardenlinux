@@ -26,11 +26,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// defaultLsm is the Linux security module to fall back to
-var defaultLsm = v1alpha1.LinuxSecurityModule(v1alpha1.LsmAppArmor)
+// defaultLSM is the Linux security module to fall back to
+var defaultLSM = v1alpha1.LinuxSecurityModule(v1alpha1.LSMAppArmor)
 
 var lsmUnitContent string = `[Unit]
-Description=Configure lsm for Gardener
+Description=Configure LSM for Gardener
 After=cloud-config-downloader.service
 Before=gardener-restart-system.service kubelet.service
 
@@ -46,7 +46,7 @@ StandardOutput=journal
 
 func ConfigureLinuxSecurityModule(osc *extensionsv1alpha1.OperatingSystemConfig, decoder runtime.Decoder) (*generator.File, *generator.Unit, error) {
 	providerConfig := osc.Spec.ProviderConfig
-	lsm := defaultLsm
+	lsm := defaultLSM
 
 	if providerConfig != nil {
 		obj := &v1alpha1.OperatingSystemConfiguration{}

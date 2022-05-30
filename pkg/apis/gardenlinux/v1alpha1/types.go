@@ -38,10 +38,10 @@ type OperatingSystemConfiguration struct {
 type LinuxSecurityModule string
 
 const (
-	// LsmAppArmor is the identifier for AppArmor as LSM
-	LsmAppArmor LinuxSecurityModule = "AppArmor"
-	// LsmSeLinux is the identifier for SELinux as LSM
-	LsmSeLinux LinuxSecurityModule = "SELinux"
+	// LSMAppArmor is the identifier for AppArmor as LSM
+	LSMAppArmor LinuxSecurityModule = "AppArmor"
+	// LSMSeLinux is the identifier for SELinux as LSM
+	LSMSeLinux LinuxSecurityModule = "SELinux"
 )
 
 // CgroupVersion defines the cgroup version (v1 or v2) to be configured on Garden Linux

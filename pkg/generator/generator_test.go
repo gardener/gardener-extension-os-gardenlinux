@@ -193,7 +193,7 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 			}
 
 			providerConfig = &gardenlinux_v1alpha1.OperatingSystemConfiguration{
-				LinuxSecurityModule: gardenlinux_v1alpha1.LsmAppArmor,
+				LinuxSecurityModule: gardenlinux_v1alpha1.LSMAppArmor,
 				CgroupVersion:       gardenlinux_v1alpha1.CgroupVersionV2,
 			}
 
@@ -238,7 +238,7 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 			expectedCloudInit := byteSlice(e)
 
 			providerConfig := &gardenlinux_v1alpha1.OperatingSystemConfiguration{
-				LinuxSecurityModule: gardenlinux_v1alpha1.LsmSeLinux,
+				LinuxSecurityModule: gardenlinux_v1alpha1.LSMSeLinux,
 				CgroupVersion:       gardenlinux_v1alpha1.CgroupVersionV1,
 			}
 
