@@ -45,7 +45,7 @@ function configure_containerd {
     desired_cgroup=$1
     CONTAINERD_CONFIG="/etc/containerd/config.toml"
 
-    if [ ! -e "$CONTAINERD_CONFIG" ]; then
+    if [ ! -s "$CONTAINERD_CONFIG" ]; then
         echo "$CONTAINERD_CONFIG does not exist" >&2
         return
     fi

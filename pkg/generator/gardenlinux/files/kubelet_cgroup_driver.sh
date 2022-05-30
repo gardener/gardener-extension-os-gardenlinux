@@ -45,7 +45,7 @@ function configure_kubelet {
     desired_cgroup=$1
     KUBELET_CONFIG="/var/lib/kubelet/config/kubelet"
 
-    if [ ! -e "$KUBELET_CONFIG" ]; then
+    if [ ! -s "$KUBELET_CONFIG" ]; then
         echo "$KUBELET_CONFIG does not exist" >&2
         return
     fi
