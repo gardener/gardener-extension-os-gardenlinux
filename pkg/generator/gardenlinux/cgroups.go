@@ -24,6 +24,7 @@ import (
 	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/apis/gardenlinux/v1alpha1"
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/generator"
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils/version"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -108,17 +109,36 @@ func extractCgroupVersion(ctx context.Context, client client.Client, osc *extens
 			return nil, fmt.Errorf("failed to decode provider config: %+v", err)
 		}
 
+		workerPoolName, ok := osc.Labels[v1beta1constants.LabelWorkerPool]
+		if !ok || len(workerPoolName) == 0 {
+			return nil, fmt.Errorf("cannot determine worker pool name from OperatingSystemConfig")
+		}
+
 		shoot, err := extensionscontroller.GetShoot(ctx, client, osc.Namespace)
 		if err != nil {
 			return nil, err
 		}
 
-		shootKubernetesAtLeast119, err := version.CompareVersions(shoot.Spec.Kubernetes.Version, ">=", "1.19")
+		var workerPoolVersion string
+
+		for _, w := range shoot.Spec.Provider.Workers {
+			if w.Name == workerPoolName {
+				if w.Kubernetes != nil && w.Kubernetes.Version != nil {
+					workerPoolVersion = *w.Kubernetes.Version
+				}
+				break
+			}
+		}
+		if len(workerPoolVersion) == 0 {
+			workerPoolVersion = shoot.Spec.Kubernetes.Version
+		}
+
+		workerKubernetesAtLeast119, err := version.CompareVersions(workerPoolVersion, ">=", "1.19")
 		if err != nil {
 			return nil, err
 		}
 
-		if shootKubernetesAtLeast119 {
+		if workerKubernetesAtLeast119 {
 			return &obj.CgroupVersion, nil
 		}
 	}

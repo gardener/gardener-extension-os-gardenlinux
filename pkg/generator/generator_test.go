@@ -26,12 +26,14 @@ import (
 	commongen "github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/generator"
 	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/generator/test"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	mockclient "github.com/gardener/gardener/pkg/mock/controller-runtime/client"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -44,13 +46,15 @@ func (b byteSlice) GomegaString() string {
 }
 
 var (
-	ctx         context.Context = context.Background()
-	permissions                 = int32(0644)
-	unit1                       = "unit1"
-	unit2                       = "unit2"
-	ccdService                  = "cloud-config-downloader.service"
-	dropin                      = "dropin"
-	filePath                    = "/var/lib/kubelet/ca.crt"
+	ctx            context.Context = context.Background()
+	permissions                    = int32(0644)
+	unit1                          = "unit1"
+	unit2                          = "unit2"
+	ccdService                     = "cloud-config-downloader.service"
+	dropin                         = "dropin"
+	filePath                       = "/var/lib/kubelet/ca.crt"
+	versionK8Sv119                 = "v1.19.0"
+	versionK8Sv118                 = "v1.18.0"
 
 	ctrl           *gomock.Controller
 	c              *mockclient.MockClient
@@ -79,6 +83,11 @@ dataKey: token`)
 
 	osctemplate = commongen.OperatingSystemConfig{
 		Object: &extensionsv1alpha1.OperatingSystemConfig{
+			ObjectMeta: v1.ObjectMeta{
+				Labels: map[string]string{
+					v1beta1constants.LabelWorkerPool: "foo",
+				},
+			},
 			Spec: extensionsv1alpha1.OperatingSystemConfigSpec{
 				Purpose: extensionsv1alpha1.OperatingSystemConfigPurposeProvision,
 				DefaultSpec: extensionsv1alpha1.DefaultSpec{
@@ -179,7 +188,14 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 			shoot = &gardencorev1beta1.Shoot{
 				Spec: gardencorev1beta1.ShootSpec{
 					Kubernetes: gardencorev1beta1.Kubernetes{
-						Version: "v1.19.0",
+						Version: versionK8Sv119,
+					},
+					Provider: gardencorev1beta1.Provider{
+						Workers: []gardencorev1beta1.Worker{
+							{
+								Name: "foo",
+							},
+						},
 					},
 				},
 			}
@@ -261,7 +277,43 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 			Expect(err).NotTo(HaveOccurred())
 			expectedCloudInit := byteSlice(e)
 
-			shoot.Spec.Kubernetes.Version = "v1.18.0"
+			shoot.Spec.Kubernetes.Version = versionK8Sv118
+
+			cluster = &extensionsv1alpha1.Cluster{
+				Spec: extensionsv1alpha1.ClusterSpec{
+					Shoot: runtime.RawExtension{
+						Raw: encode(shoot),
+					},
+				},
+			}
+
+			osc.Bootstrap = false
+			osc.Object.Spec.Purpose = extensionsv1alpha1.OperatingSystemConfigPurposeReconcile
+			osc.CRI = nil
+			c, _, err := g.Generate(&osc)
+			cloudInit := byteSlice(c)
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(cloudInit).To(Equal(expectedCloudInit))
+		})
+
+		It("[reconcile] should force cgroup version to v1 for only one worker pool with K8S <= 1.18", func() {
+			e, err := testfiles.Files.ReadFile("docker-reconcile-cgroup-k8sv118")
+			Expect(err).NotTo(HaveOccurred())
+			expectedCloudInit := byteSlice(e)
+
+			shoot.Spec.Kubernetes.Version = versionK8Sv119
+			shoot.Spec.Provider = gardencorev1beta1.Provider{
+				Workers: []gardencorev1beta1.Worker{
+					{
+						Name: "foo",
+						Kubernetes: &gardencorev1beta1.WorkerKubernetes{
+							Version: &versionK8Sv118,
+						},
+					},
+				},
+			}
+
 			cluster = &extensionsv1alpha1.Cluster{
 				Spec: extensionsv1alpha1.ClusterSpec{
 					Shoot: runtime.RawExtension{
