@@ -1,0 +1,14 @@
+[Unit]
+Description=Optionally restart system to apply Gardener specific OS configuration
+Documentation=https://github.com/gardenlinux/gardenlinux/docs/gardener-kernel-restart.md
+After=gardener-configure-cgroups.service garderner-configure-lsm.service
+Before=kubelet.service
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/gardener/bin/restart_system.sh
+RemainAfterExit=true
+StandardOutput=journal

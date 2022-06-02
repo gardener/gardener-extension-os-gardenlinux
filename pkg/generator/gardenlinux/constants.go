@@ -17,7 +17,7 @@ package gardenlinux
 import "embed"
 
 var (
-	//go:embed templates/* files/*
+	//go:embed templates/* files/* units/*
 	templates embed.FS
 
 	scriptPermissions = int32(0755)

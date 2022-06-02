@@ -1,8 +1,8 @@
 #!/bin/bash
 
-RESTART_CONTROL_FILE="/var/run/gardener/restart-required"
-
 set -Euo pipefail
+
+source "$(dirname $0)/g_functions.sh"
 
 if systemctl status kubelet.service; then
     echo "kubelet is running, not restarting the kernel" >&2

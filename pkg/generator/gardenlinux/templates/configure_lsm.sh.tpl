@@ -3,17 +3,8 @@
 set -Eeuo pipefail
 
 LSM_CMDLINE="/etc/kernel/cmdline.d/90-lsm.cfg"
-RESTART_CONTROL_FILE="/var/run/gardener/restart-required"
 
-function check_current_lsm {
-    if grep -q selinux /sys/kernel/security/lsm; then
-        echo SELinux
-    elif grep -q apparmor /sys/kernel/security/lsm; then
-        echo AppArmor
-    else
-        echo none
-    fi
-}
+source "$(dirname $0)/g_functions.sh"
 
 desired_lsm={{.linuxSecurityModule}}
 current_lsm=$(check_current_lsm)

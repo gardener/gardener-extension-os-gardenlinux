@@ -96,15 +96,26 @@ func (g *GardenLinuxCloudInitGenerator) Generate(osc *generator.OperatingSystemC
 			return nil, nil, err
 		}
 
-		// place the systemd unit and script that can restart the system if required
-		restartScript, restartUnit, err := gardenlinuxgenerator.PlaceRestartUnit()
+		osc.Files = append(osc.Files, cgroupScript, lsmScript)
+		osc.Units = append(osc.Units, cgroupUnit, lsmUnit)
+		unitsToEnable = []string{cgroupUnit.Name, lsmUnit.Name}
+
+		// add additional scripts and units that are provided in the embedded fs
+		additionalScripts, err := gardenlinuxgenerator.GetAdditionalScripts()
+		if err != nil {
+			return nil, nil, err
+		}
+		osc.Files = append(osc.Files, additionalScripts...)
+
+		additionalUnits, err := gardenlinuxgenerator.GetAdditionalUnits()
 		if err != nil {
 			return nil, nil, err
 		}
 
-		osc.Files = append(osc.Files, cgroupScript, lsmScript, restartScript)
-		osc.Units = append(osc.Units, cgroupUnit, lsmUnit, restartUnit)
-		unitsToEnable = []string{cgroupUnit.Name, lsmUnit.Name, restartUnit.Name}
+		for _, unit := range additionalUnits {
+			osc.Units = append(osc.Units, unit)
+			unitsToEnable = append(unitsToEnable, unit.Name)
+		}
 
 		// add scripts and dropins for containerd and kubelet
 		runtimeScripts, runtimeUnits, err := gardenlinuxgenerator.ContainerRuntimesCgroupDrivers()
@@ -114,6 +125,7 @@ func (g *GardenLinuxCloudInitGenerator) Generate(osc *generator.OperatingSystemC
 
 		osc.Files = append(osc.Files, runtimeScripts...)
 		osc.Units = append(osc.Units, runtimeUnits...)
+
 	}
 
 	return g.cloudInitGenerator.Generate(osc)
