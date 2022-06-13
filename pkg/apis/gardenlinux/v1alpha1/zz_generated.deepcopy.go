@@ -29,6 +29,16 @@ import (
 func (in *OperatingSystemConfiguration) DeepCopyInto(out *OperatingSystemConfiguration) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
+	if in.LinuxSecurityModule != nil {
+		in, out := &in.LinuxSecurityModule, &out.LinuxSecurityModule
+		*out = new(LinuxSecurityModule)
+		**out = **in
+	}
+	if in.CgroupVersion != nil {
+		in, out := &in.CgroupVersion, &out.CgroupVersion
+		*out = new(CgroupVersion)
+		**out = **in
+	}
 	return
 }
 

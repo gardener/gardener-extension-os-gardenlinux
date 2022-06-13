@@ -55,8 +55,8 @@ func ConfigureLinuxSecurityModule(osc *extensionsv1alpha1.OperatingSystemConfig,
 			return nil, nil, fmt.Errorf("failed to decode provider config: %+v", err)
 		}
 
-		if len(obj.LinuxSecurityModule) != 0 {
-			lsm = obj.LinuxSecurityModule
+		if obj.LinuxSecurityModule != nil && len(*obj.LinuxSecurityModule) != 0 {
+			lsm = *obj.LinuxSecurityModule
 		}
 	}
 

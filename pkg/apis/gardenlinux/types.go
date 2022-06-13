@@ -34,10 +34,10 @@ type OperatingSystemConfiguration struct {
 	metav1.TypeMeta
 
 	// LinuxSecurityModule allows to configure default Linux Security Module for Garden Linux. If not present, it will default to `AppArmor`.
-	LinuxSecurityModule LinuxSecurityModule
+	LinuxSecurityModule *LinuxSecurityModule
 
 	// CgroupVersion allows to configure which cgroup version will be used on Garden Linux
-	CgroupVersion CgroupVersion
+	CgroupVersion *CgroupVersion
 }
 
 // LinuxSecurityModule defines the Linux Security Module (LSM) for Garden Linux

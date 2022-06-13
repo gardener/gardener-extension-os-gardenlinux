@@ -139,7 +139,7 @@ func extractCgroupVersion(ctx context.Context, client client.Client, osc *extens
 		}
 
 		if workerKubernetesAtLeast119 {
-			return &obj.CgroupVersion, nil
+			return obj.CgroupVersion, nil
 		}
 	}
 

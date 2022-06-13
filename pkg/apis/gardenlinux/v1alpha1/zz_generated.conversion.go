@@ -22,6 +22,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	unsafe "unsafe"
+
 	gardenlinux "github.com/gardener/gardener-extension-os-gardenlinux/pkg/apis/gardenlinux"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -48,8 +50,8 @@ func RegisterConversions(s *runtime.Scheme) error {
 }
 
 func autoConvert_v1alpha1_OperatingSystemConfiguration_To_gardenlinux_OperatingSystemConfiguration(in *OperatingSystemConfiguration, out *gardenlinux.OperatingSystemConfiguration, s conversion.Scope) error {
-	out.LinuxSecurityModule = gardenlinux.LinuxSecurityModule(in.LinuxSecurityModule)
-	out.CgroupVersion = gardenlinux.CgroupVersion(in.CgroupVersion)
+	out.LinuxSecurityModule = (*gardenlinux.LinuxSecurityModule)(unsafe.Pointer(in.LinuxSecurityModule))
+	out.CgroupVersion = (*gardenlinux.CgroupVersion)(unsafe.Pointer(in.CgroupVersion))
 	return nil
 }
 
@@ -59,8 +61,8 @@ func Convert_v1alpha1_OperatingSystemConfiguration_To_gardenlinux_OperatingSyste
 }
 
 func autoConvert_gardenlinux_OperatingSystemConfiguration_To_v1alpha1_OperatingSystemConfiguration(in *gardenlinux.OperatingSystemConfiguration, out *OperatingSystemConfiguration, s conversion.Scope) error {
-	out.LinuxSecurityModule = LinuxSecurityModule(in.LinuxSecurityModule)
-	out.CgroupVersion = CgroupVersion(in.CgroupVersion)
+	out.LinuxSecurityModule = (*LinuxSecurityModule)(unsafe.Pointer(in.LinuxSecurityModule))
+	out.CgroupVersion = (*CgroupVersion)(unsafe.Pointer(in.CgroupVersion))
 	return nil
 }
 

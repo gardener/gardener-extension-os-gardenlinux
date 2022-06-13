@@ -24,11 +24,11 @@ func addDefaultingFuncs(scheme *runtime.Scheme) error {
 
 // SetDefaults_OperatingSystemConfiguration sets the defaults for the Garden Linux operating system configuration
 func SetDefaults_OperatingSystemConfiguration(obj *OperatingSystemConfiguration) {
-	if len(obj.LinuxSecurityModule) == 0 {
-		obj.LinuxSecurityModule = LSMAppArmor
+	if obj.LinuxSecurityModule == nil || len(*obj.LinuxSecurityModule) == 0 {
+		*obj.LinuxSecurityModule = LSMAppArmor
 	}
 
-	if len(obj.CgroupVersion) == 0 {
-		obj.CgroupVersion = CgroupVersionV1
+	if obj.CgroupVersion == nil || len(*obj.CgroupVersion) == 0 {
+		*obj.CgroupVersion = CgroupVersionV1
 	}
 }

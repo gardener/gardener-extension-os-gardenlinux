@@ -27,11 +27,11 @@ type OperatingSystemConfiguration struct {
 
 	// LinuxSecurityModule allows to configure default Linux Security Module for Garden Linux.
 	// +optional
-	LinuxSecurityModule LinuxSecurityModule `json:"linuxSecurityModule,omitempty"`
+	LinuxSecurityModule *LinuxSecurityModule `json:"linuxSecurityModule,omitempty"`
 
 	// CgroupVersion allows to configure which cgroup version will be used on Garden Linux
 	// +optional
-	CgroupVersion CgroupVersion `json:"cgroupVersion,omitempty"`
+	CgroupVersion *CgroupVersion `json:"cgroupVersion,omitempty"`
 }
 
 // LinuxSecurityModule defines the Linux Security Module (LSM) for Garden Linux

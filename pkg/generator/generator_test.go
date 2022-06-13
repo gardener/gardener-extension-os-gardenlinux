@@ -169,7 +169,14 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 	})
 
 	Describe("Conformance Tests Reconcile", func() {
-		g := gardenlinux_generator.CloudInitGenerator(ctx)
+		var (
+			g = gardenlinux_generator.CloudInitGenerator(ctx)
+
+			lsmAppArmor = gardenlinux_v1alpha1.LSMAppArmor
+			lsmSeLinux  = gardenlinux_v1alpha1.LSMSeLinux
+			cgroupV1    = gardenlinux_v1alpha1.CgroupVersionV1
+			cgroupV2    = gardenlinux_v1alpha1.CgroupVersionV2
+		)
 
 		BeforeEach(func() {
 			ctrl = gomock.NewController(GinkgoT())
@@ -209,8 +216,8 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 			}
 
 			providerConfig = &gardenlinux_v1alpha1.OperatingSystemConfiguration{
-				LinuxSecurityModule: gardenlinux_v1alpha1.LSMAppArmor,
-				CgroupVersion:       gardenlinux_v1alpha1.CgroupVersionV2,
+				LinuxSecurityModule: &lsmAppArmor,
+				CgroupVersion:       &cgroupV2,
 			}
 
 			osc.Object.Spec.ProviderConfig = &runtime.RawExtension{
@@ -254,8 +261,8 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 			expectedCloudInit := byteSlice(e)
 
 			providerConfig := &gardenlinux_v1alpha1.OperatingSystemConfiguration{
-				LinuxSecurityModule: gardenlinux_v1alpha1.LSMSeLinux,
-				CgroupVersion:       gardenlinux_v1alpha1.CgroupVersionV1,
+				LinuxSecurityModule: &lsmSeLinux,
+				CgroupVersion:       &cgroupV1,
 			}
 
 			osc.Object.Spec.ProviderConfig = &runtime.RawExtension{
