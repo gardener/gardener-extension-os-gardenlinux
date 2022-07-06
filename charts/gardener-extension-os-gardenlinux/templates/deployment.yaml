@@ -20,7 +20,7 @@ spec:
         app.kubernetes.io/name: gardener-extension-os-gardenlinux
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
-      priorityClassName: gardener-extension-os-gardenlinux
+      priorityClassName: gardener-system-900
       serviceAccountName: gardener-extension-os-gardenlinux
       containers:
       - name: gardener-extension-os-gardenlinux
