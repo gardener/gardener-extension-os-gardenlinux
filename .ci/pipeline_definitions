@@ -12,6 +12,11 @@ gardener-extension-os-gardenlinux:
             image: 'eu.gcr.io/gardener-project/gardener/extensions/os-gardenlinux'
             dockerfile: 'Dockerfile'
             target: gardener-extension-os-gardenlinux
+            resource_labels:
+            - name: 'cloud.gardener.cnudie/responsibles'
+              value:
+              - type: 'githubUser'
+                username: 'MrBatschner'
   jobs:
     head-update:
       traits:
