@@ -21,7 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	componentbaseconfig "k8s.io/component-base/config"
-	"k8s.io/klog"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -48,8 +47,6 @@ type GardenletConfiguration struct {
 	LogLevel *string
 	// LogFormat is the output format for the logs. Must be one of [text,json].
 	LogFormat *string
-	// KubernetesLogLevel is the log level used for Kubernetes' k8s.io/klog functions.
-	KubernetesLogLevel *klog.Level
 	// Server defines the configuration of the HTTP server.
 	Server *ServerConfiguration
 	// Debugging holds configuration for Debugging related features.
@@ -81,10 +78,10 @@ type GardenletConfiguration struct {
 type GardenClientConnection struct {
 	componentbaseconfig.ClientConnectionConfiguration
 	// GardenClusterAddress is the external address that the gardenlets can use to remotely connect to the Garden
-	// cluster. It is needed in case the gardenlet deploys itself into shooted seeds.
+	// cluster. It is needed in case the gardenlet deploys itself into ManagedSeeds.
 	GardenClusterAddress *string
 	// GardenClusterCACert is the external address that the gardenlets can use to remotely connect to the Garden
-	// cluster. It is needed in case the gardenlet deploys itself into shooted seeds.
+	// cluster. It is needed in case the gardenlet deploys itself into ManagedSeeds.
 	GardenClusterCACert []byte
 	// BootstrapKubeconfig is a reference to a secret that contains a data key 'kubeconfig' whose value
 	// is a kubeconfig that can be used for bootstrapping. If `kubeconfig` is given then only this kubeconfig
@@ -94,6 +91,28 @@ type GardenClientConnection struct {
 	// it uses to communicate with the garden cluster. If `kubeconfig` is given then only this kubeconfig
 	// will be considered.
 	KubeconfigSecret *corev1.SecretReference
+	// KubeconfigValidity allows configuring certain settings related to the validity and rotation of kubeconfig
+	// secrets.
+	KubeconfigValidity *KubeconfigValidity
+}
+
+// KubeconfigValidity allows configuring certain settings related to the validity and rotation of kubeconfig secrets.
+type KubeconfigValidity struct {
+	// Validity specifies the validity time for the client certificate issued by gardenlet. It will be set as
+	// .spec.expirationSeconds in the created CertificateSigningRequest resource.
+	// This value is not defaulted, meaning that the value configured via `--cluster-signing-duration` on
+	// kube-controller-manager is used.
+	// Note that using this value will only have effect for garden clusters >= Kubernetes 1.22.
+	// Note that changing this value will only have effect after the next rotation of the gardenlet's kubeconfig secret.
+	Validity *metav1.Duration
+	// AutoRotationJitterPercentageMin is the minimum percentage when it comes to compute a random jitter value for the
+	// automatic rotation deadline of expiring certificates. Defaults to 70. This means that gardenlet will renew its
+	// client certificate when 70% of its lifetime is reached the earliest.
+	AutoRotationJitterPercentageMin *int32
+	// AutoRotationJitterPercentageMax is the maximum percentage when it comes to compute a random jitter value for the
+	// automatic rotation deadline of expiring certificates. Defaults to 90. This means that gardenlet will renew its
+	// client certificate when 90% of its lifetime is reached at the latest.
+	AutoRotationJitterPercentageMax *int32
 }
 
 // SeedClientConnection specifies the client connection settings
@@ -130,15 +149,17 @@ type GardenletControllerConfiguration struct {
 	Shoot *ShootControllerConfiguration
 	// ShootCare defines the configuration of the ShootCare controller.
 	ShootCare *ShootCareControllerConfiguration
+	// SeedCare defines the configuration of the SeedCare controller.
+	SeedCare *SeedCareControllerConfiguration
 	// ShootMigration defines the configuration of the ShootMigration controller.
 	ShootMigration *ShootMigrationControllerConfiguration
 	// ShootStateSync defines the configuration of the ShootState controller.
 	ShootStateSync *ShootStateSyncControllerConfiguration
 	// SeedAPIServerNetworkPolicy defines the configuration of the SeedAPIServerNetworkPolicy controller.
 	SeedAPIServerNetworkPolicy *SeedAPIServerNetworkPolicyControllerConfiguration
-	// ManagedSeedControllerConfiguration the configuration of the ManagedSeed controller.
+	// ManagedSeedControllerConfiguration defines the configuration of the ManagedSeed controller.
 	ManagedSeed *ManagedSeedControllerConfiguration
-	// ShootSecretControllerConfiguration the configuration of the ShootSecret controller.
+	// ShootSecretControllerConfiguration defines the configuration of the ShootSecret controller.
 	ShootSecret *ShootSecretControllerConfiguration
 }
 
@@ -268,6 +289,20 @@ type ShootCareControllerConfiguration struct {
 	StaleExtensionHealthChecks *StaleExtensionHealthChecks
 	// ConditionThresholds defines the condition threshold per condition type.
 	ConditionThresholds []ConditionThreshold
+	// WebhookRemediatorEnabled specifies whether the remediator for webhooks not following the Kubernetes best
+	// practices (https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#best-practices-and-warnings)
+	// is enabled.
+	WebhookRemediatorEnabled *bool
+}
+
+// SeedCareControllerConfiguration defines the configuration of the SeedCare
+// controller.
+type SeedCareControllerConfiguration struct {
+	// SyncPeriod is the duration how often the existing resources are reconciled (how
+	// often the health check of Seed clusters is performed.
+	SyncPeriod *metav1.Duration
+	// ConditionThresholds defines the condition threshold per condition type.
+	ConditionThresholds []ConditionThreshold
 }
 
 // ShootMigrationControllerConfiguration defines the configuration of the ShootMigration
@@ -370,6 +405,14 @@ type FluentBit struct {
 	// OutputSection defines [OUTPUT] configuration for the fluent-bit.
 	// If it is nil, fluent-bit uses default output configuration.
 	OutputSection *string
+	// NetworkPolicy defines settings for the fluent-bit NetworkPolicy.
+	NetworkPolicy *FluentBitNetworkPolicy
+}
+
+// FluentBitNetworkPolicy defines settings for the fluent-bit NetworkPolicy.
+type FluentBitNetworkPolicy struct {
+	// AdditionalEgressIPBlocks contains IP CIDRs for the egress network policy.
+	AdditionalEgressIPBlocks []string
 }
 
 // Loki contains configuration for the Loki.
@@ -384,8 +427,6 @@ type Loki struct {
 
 // GardenLoki contains configuration for the Loki in garden namespace.
 type GardenLoki struct {
-	// Priority is the priority value for the Loki.
-	Priority *int32
 	// Storage is the disk storage capacity of the central Loki.
 	// Defaults to 100Gi.
 	Storage *resource.Quantity
@@ -395,6 +436,12 @@ type GardenLoki struct {
 type ShootNodeLogging struct {
 	// ShootPurposes determines which shoots can have node logging by their purpose.
 	ShootPurposes []gardencore.ShootPurpose
+}
+
+// ShootEventLogging contains configurations for the shoot event logger.
+type ShootEventLogging struct {
+	// Enabled is used to enable or disable shoot event logger.
+	Enabled *bool
 }
 
 // Logging contains configuration for the logging stack.
@@ -407,6 +454,8 @@ type Logging struct {
 	Loki *Loki
 	// ShootNodeLogging contains configurations for the shoot node logging.
 	ShootNodeLogging *ShootNodeLogging
+	// ShootEventLogging contains configurations for the shoot event logger.
+	ShootEventLogging *ShootEventLogging
 }
 
 // ServerConfiguration contains details for the HTTP(S) servers.
@@ -541,6 +590,9 @@ type MonitoringConfig struct {
 
 // ShootMonitoringConfig contains settings for the shoot monitoring stack.
 type ShootMonitoringConfig struct {
+	// Enabled is used to enable or disable the shoot monitoring stack.
+	// Defaults to true.
+	Enabled *bool
 	// RemoteWrite is optional and contains remote write setting.
 	RemoteWrite *RemoteWriteMonitoringConfig
 	// ExternalLabels is optional and sets additional external labels for the monitoring stack.

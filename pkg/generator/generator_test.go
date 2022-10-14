@@ -17,6 +17,7 @@ package generator_test
 import (
 	gardenlinux_generator "github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator"
 	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator/testfiles"
+	"github.com/go-logr/logr"
 
 	commongen "github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/generator"
 	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/generator/test"
@@ -24,6 +25,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
+
+var logger = logr.Discard()
 
 var (
 	permissions = int32(0644)
@@ -98,7 +101,7 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 			osc.Bootstrap = true
 			osc.Object.Spec.Purpose = v1alpha1.OperatingSystemConfigPurposeProvision
 			osc.CRI = nil
-			cloudInit, _, err := g.Generate(&osc)
+			cloudInit, _, err := g.Generate(logger, &osc)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(cloudInit).To(Equal(expectedCloudInit))
@@ -111,7 +114,7 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 			osc.Bootstrap = false
 			osc.Object.Spec.Purpose = v1alpha1.OperatingSystemConfigPurposeReconcile
 			osc.CRI = nil
-			cloudInit, _, err := g.Generate(&osc)
+			cloudInit, _, err := g.Generate(logger, &osc)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(cloudInit).To(Equal(expectedCloudInit))
@@ -124,7 +127,7 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 			osc.Bootstrap = true
 			osc.Object.Spec.Purpose = v1alpha1.OperatingSystemConfigPurposeProvision
 			osc.CRI = &criConfig
-			cloudInit, _, err := g.Generate(&osc)
+			cloudInit, _, err := g.Generate(logger, &osc)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(cloudInit).To(Equal(expectedCloudInit))
@@ -137,7 +140,7 @@ var _ = Describe("Garden Linux OS Generator Test", func() {
 			osc.Bootstrap = false
 			osc.Object.Spec.Purpose = v1alpha1.OperatingSystemConfigPurposeReconcile
 			osc.CRI = &criConfig
-			cloudInit, _, err := g.Generate(&osc)
+			cloudInit, _, err := g.Generate(logger, &osc)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(cloudInit).To(Equal(expectedCloudInit))

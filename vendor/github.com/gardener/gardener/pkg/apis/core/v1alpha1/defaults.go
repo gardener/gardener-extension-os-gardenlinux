@@ -81,6 +81,21 @@ func defaultSubject(obj *rbacv1.Subject) {
 	}
 }
 
+// SetDefaults_MachineImageVersion sets default values for MachineImageVersion objects.
+func SetDefaults_MachineImageVersion(obj *MachineImageVersion) {
+	if len(obj.CRI) == 0 {
+		obj.CRI = []CRI{
+			{
+				Name: CRINameDocker,
+			},
+		}
+	}
+
+	if len(obj.Architectures) == 0 {
+		obj.Architectures = []string{v1beta1constants.ArchitectureAMD64}
+	}
+}
+
 // SetDefaults_MachineType sets default values for MachineType objects.
 func SetDefaults_MachineType(obj *MachineType) {
 	if obj.Usable == nil {
@@ -140,10 +155,11 @@ func SetDefaults_SeedSettingDependencyWatchdog(obj *SeedSettingDependencyWatchdo
 
 // SetDefaults_Shoot sets default values for Shoot objects.
 func SetDefaults_Shoot(obj *Shoot) {
-	if obj.Spec.Kubernetes.AllowPrivilegedContainers == nil {
+	// Errors are ignored here because we cannot do anything meaningful with them - variables will default to `false`.
+	k8sLess125, _ := versionutils.CheckVersionMeetsConstraint(obj.Spec.Kubernetes.Version, "< 1.25")
+	if obj.Spec.Kubernetes.AllowPrivilegedContainers == nil && k8sLess125 {
 		obj.Spec.Kubernetes.AllowPrivilegedContainers = pointer.Bool(true)
 	}
-
 	if obj.Spec.Kubernetes.KubeAPIServer == nil {
 		obj.Spec.Kubernetes.KubeAPIServer = &KubeAPIServerConfig{}
 	}
@@ -174,6 +190,14 @@ func SetDefaults_Shoot(obj *Shoot) {
 	}
 	if obj.Spec.Kubernetes.KubeControllerManager.NodeMonitorGracePeriod == nil {
 		obj.Spec.Kubernetes.KubeControllerManager.NodeMonitorGracePeriod = &metav1.Duration{Duration: 2 * time.Minute}
+	}
+
+	if obj.Spec.Kubernetes.KubeScheduler == nil {
+		obj.Spec.Kubernetes.KubeScheduler = &KubeSchedulerConfig{}
+	}
+	if obj.Spec.Kubernetes.KubeScheduler.Profile == nil {
+		defaultProfile := SchedulingProfileBalanced
+		obj.Spec.Kubernetes.KubeScheduler.Profile = &defaultProfile
 	}
 
 	if obj.Spec.Kubernetes.KubeProxy == nil {
@@ -268,6 +292,10 @@ func SetDefaults_Shoot(obj *Shoot) {
 		kubernetesVersion := obj.Spec.Kubernetes.Version
 		if worker.Kubernetes != nil && worker.Kubernetes.Version != nil {
 			kubernetesVersion = *worker.Kubernetes.Version
+		}
+
+		if worker.Machine.Architecture == nil {
+			obj.Spec.Provider.Workers[i].Machine.Architecture = pointer.String(v1beta1constants.ArchitectureAMD64)
 		}
 
 		if k8sVersionGreaterOrEqualThan122, _ := versionutils.CompareVersions(kubernetesVersion, ">=", "1.22"); !k8sVersionGreaterOrEqualThan122 {

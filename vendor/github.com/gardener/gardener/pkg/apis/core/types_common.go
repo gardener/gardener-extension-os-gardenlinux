@@ -47,6 +47,10 @@ const (
 	ErrorConfigurationProblem ErrorCode = "ERR_CONFIGURATION_PROBLEM"
 	// ErrorRetryableConfigurationProblem indicates that the last error occurred due to a retryable configuration problem.
 	ErrorRetryableConfigurationProblem ErrorCode = "ERR_RETRYABLE_CONFIGURATION_PROBLEM"
+	// ErrorProblematicWebhook indicates that the last error occurred due to a webhook not following the Kubernetes
+	// best practices (https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#best-practices-and-warnings).
+	// It is classified as a non-retryable error code.
+	ErrorProblematicWebhook ErrorCode = "ERR_PROBLEMATIC_WEBHOOK"
 )
 
 // LastError indicates the last occurred error for an operation on a resource.
@@ -120,6 +124,31 @@ type Gardener struct {
 	// Version is the version of the Gardener which last acted on a Shoot cluster.
 	Version string
 }
+
+// HighAvailability specifies the configuration settings for high availability for a resource. Typical
+// usages could be to configure HA for shoot control plane or for seed system components.
+type HighAvailability struct {
+	// FailureTolerance specifies the failure tolerance level in a high availability setup.
+	FailureTolerance FailureTolerance
+}
+
+// FailureTolerance holds information about failure tolerance configuration.
+type FailureTolerance struct {
+	// Type specifies the type of failure that the highly available resource can tolerate.
+	Type FailureToleranceType
+}
+
+// FailureToleranceType is the type of failure that a highly available setup can tolerate.
+type FailureToleranceType string
+
+const (
+	// FailureToleranceTypeNode specifies that a highly available resource can tolerate the
+	// failure of one or more nodes within a single-zone setup and still be available.
+	FailureToleranceTypeNode FailureToleranceType = "node"
+	// FailureToleranceTypeZone specifies that a highly available resource can tolerate the
+	// failure of one or more zones within a multi-zone setup and still be available.
+	FailureToleranceTypeZone FailureToleranceType = "zone"
+)
 
 const (
 	// GardenerName is the value in a Garden resource's `.metadata.finalizers[]` array on which the Gardener will react
