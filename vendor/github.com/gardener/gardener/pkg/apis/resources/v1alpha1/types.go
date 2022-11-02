@@ -25,6 +25,8 @@ const (
 	// Ignore is an annotation that dictates whether a resources should be ignored during
 	// reconciliation.
 	Ignore = "resources.gardener.cloud/ignore"
+	// SkipHealthCheck is an annotation that dictates whether a resource should be ignored during health check.
+	SkipHealthCheck = "resources.gardener.cloud/skip-health-check"
 	// DeleteOnInvalidUpdate is a constant for an annotation on a resource managed by a ManagedResource. If set to
 	// true then the controller will delete the object in case it faces an "Invalid" response during an update operation.
 	DeleteOnInvalidUpdate = "resources.gardener.cloud/delete-on-invalid-update"
@@ -46,6 +48,14 @@ const (
 	// true then the controller will keep the resource requests and limits in Pod templates (e.g. in a
 	// DeploymentSpec) during updates to the resource. This applies for all containers.
 	PreserveResources = "resources.gardener.cloud/preserve-resources"
+	// OriginAnnotation is a constant for an annotation on a resource managed by a ManagedResource.
+	// It is set by the ManagedResource controller to the key of the owning ManagedResource, optionally prefixed with the
+	// clusterID.
+	OriginAnnotation = "resources.gardener.cloud/origin"
+
+	// ManagedBy is a constant for a label on an object managed by a ManagedResource.
+	// It is set by the ManagedResource controller depending on its configuration. By default it is set to "gardener".
+	ManagedBy = "resources.gardener.cloud/managed-by"
 
 	// StaticTokenSkip is a constant for a label on a ServiceAccount which indicates that this ServiceAccount should not
 	// be considered by this controller.
@@ -94,6 +104,14 @@ const (
 	// ProjectedTokenExpirationSeconds is a constant for an annotation on a Pod which overwrites the default token expiration
 	// seconds for the automatic mount of a projected ServiceAccount token.
 	ProjectedTokenExpirationSeconds = "projected-token-mount.resources.gardener.cloud/expiration-seconds"
+
+	// SeccompProfileSkip is a constant for a label on a Pod which indicates that this Pod should not be considered for
+	// defaulting of its seccomp profile.
+	SeccompProfileSkip = "seccompprofile.resources.gardener.cloud/skip"
+
+	// PodTopologySpreadConstraintsSkip is a constant for a label on a Pod which indicates that this Pod should not be considered for
+	// adding the pod-template-hash selector to the topology spread constraint.
+	PodTopologySpreadConstraintsSkip = "topology-spread-constraints.resources.gardener.cloud/skip"
 )
 
 // +kubebuilder:resource:shortName="mr"
@@ -101,6 +119,7 @@ const (
 // +kubebuilder:printcolumn:name="Class",type=string,JSONPath=`.spec.class`,description="The class identifies which resource manager is responsible for this ManagedResource."
 // +kubebuilder:printcolumn:name="Applied",type=string,JSONPath=`.status.conditions[?(@.type=="ResourcesApplied")].status`,description=" Indicates whether all resources have been applied."
 // +kubebuilder:printcolumn:name="Healthy",type=string,JSONPath=`.status.conditions[?(@.type=="ResourcesHealthy")].status`,description="Indicates whether all resources are healthy."
+// +kubebuilder:printcolumn:name="Progressing",type=string,JSONPath=`.status.conditions[?(@.type=="ResourcesProgressing")].status`,description="Indicates whether some resources are still progressing to be rolled out."
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`,description="creation timestamp"
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
@@ -164,6 +183,9 @@ type ManagedResourceStatus struct {
 	// Resources is a list of objects that have been created.
 	// +optional
 	Resources []ObjectReference `json:"resources,omitempty"`
+	// SecretsDataChecksum is the checksum of referenced secrets data.
+	// +optional
+	SecretsDataChecksum *string `json:"secretsDataChecksum,omitempty"`
 }
 
 // ObjectReference is a reference to another object.
@@ -180,6 +202,8 @@ const (
 	ResourcesApplied gardencorev1beta1.ConditionType = "ResourcesApplied"
 	// ResourcesHealthy is a condition type that indicates whether all resources are present and healthy.
 	ResourcesHealthy gardencorev1beta1.ConditionType = "ResourcesHealthy"
+	// ResourcesProgressing is a condition type that indicates whether some resources are still progressing to be rolled out.
+	ResourcesProgressing gardencorev1beta1.ConditionType = "ResourcesProgressing"
 )
 
 // These are well-known reasons for Conditions.
@@ -205,7 +229,10 @@ const (
 	// ReleaseOfOrphanedResourcesFailed indicates that the `ResourcesApplied` condition is `False`,
 	// because the release of orphaned resources failed.
 	ReleaseOfOrphanedResourcesFailed = "ReleaseOfOrphanedResourcesFailed"
-	// ConditionHealthChecksPending indicates that the `ResourcesHealthy` condition is `Unknown`,
-	// because the health checks have not been completely executed yet for the current set of resources.
-	ConditionHealthChecksPending = "HealthChecksPending"
+	// ConditionManagedResourceIgnored indicates that the ManagedResource's conditions are not checked,
+	// because the ManagedResource is marked to be ignored.
+	ConditionManagedResourceIgnored = "ManagedResourceIgnored"
+	// ConditionChecksPending indicates that the `ResourcesProgressing` condition is `Unknown`,
+	// because the condition checks have not been completely executed yet for the current set of resources.
+	ConditionChecksPending = "ChecksPending"
 )
