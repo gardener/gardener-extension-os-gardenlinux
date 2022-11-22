@@ -17,6 +17,8 @@ vpa:
 controllers:
   concurrentSyncs: 5
   ignoreOperationAnnotation: false
+  heartbeat: 
+    renewIntervalSeconds: 30 
 
 leaderElection:
   resourceLock: leases
