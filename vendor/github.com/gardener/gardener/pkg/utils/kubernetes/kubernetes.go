@@ -16,6 +16,8 @@ package kubernetes
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"sort"
@@ -23,8 +25,6 @@ import (
 	"strings"
 	"time"
 
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/retry"
 
@@ -39,6 +39,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/duration"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/rest"
 	clientcmdv1 "k8s.io/client-go/tools/clientcmd/api/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -680,40 +681,26 @@ func ObjectKeyForCreateWebhooks(obj client.Object, req admission.Request) client
 	return client.ObjectKey{Namespace: namespace, Name: name}
 }
 
-// GetTopologySpreadConstraints returns the required topology spread constraints based
-// on the passed `failureToleranceType`.
-func GetTopologySpreadConstraints(failureToleranceType *gardencorev1beta1.FailureToleranceType, maxReplicas int32, labelSelector metav1.LabelSelector) []corev1.TopologySpreadConstraint {
-	const criticalMaxReplicaCount = 6
-
-	whenUnsatisfiable := corev1.DoNotSchedule
-	if failureToleranceType == nil {
-		// Spread should be a best-effort only if no HA is configured.
-		whenUnsatisfiable = corev1.ScheduleAnyway
+// ClientCertificateFromRESTConfig returns the client certificate used inside a REST config.
+func ClientCertificateFromRESTConfig(restConfig *rest.Config) (*tls.Certificate, error) {
+	cert, err := tls.X509KeyPair(restConfig.CertData, restConfig.KeyData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse X509 certificate: %w", err)
 	}
 
-	constraints := []corev1.TopologySpreadConstraint{
-		{
-			TopologyKey:       corev1.LabelHostname,
-			MaxSkew:           1,
-			WhenUnsatisfiable: whenUnsatisfiable,
-			LabelSelector:     &labelSelector,
-		},
+	if len(cert.Certificate) < 1 {
+		return nil, fmt.Errorf("the X509 certificate is invalid, no cert/key data found")
 	}
 
-	if helper.IsFailureToleranceTypeZone(failureToleranceType) {
-		maxSkew := int32(1)
-		// Increase maxSkew if there can be >= 6 replicas, see https://github.com/kubernetes/kubernetes/issues/109364.
-		if maxReplicas >= criticalMaxReplicaCount {
-			maxSkew = 2
-		}
-
-		constraints = append(constraints, corev1.TopologySpreadConstraint{
-			TopologyKey:       corev1.LabelTopologyZone,
-			MaxSkew:           maxSkew,
-			WhenUnsatisfiable: corev1.DoNotSchedule,
-			LabelSelector:     &labelSelector,
-		})
+	certs, err := x509.ParseCertificates(cert.Certificate[0])
+	if err != nil {
+		return nil, fmt.Errorf("the X509 certificate bundle cannot be parsed: %w", err)
 	}
 
-	return constraints
+	if len(certs) < 1 {
+		return nil, fmt.Errorf("the X509 certificate bundle does not contain exactly one certificate")
+	}
+
+	cert.Leaf = certs[0]
+	return &cert, nil
 }

@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/ahmetb/gen-crd-api-reference-docs v0.2.0
-	github.com/gardener/gardener v1.56.0
+	github.com/gardener/gardener v1.60.0
 	github.com/go-logr/logr v1.2.3
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.20.0
@@ -92,16 +92,16 @@ require (
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220502173005-c8bf987b8c21 // indirect
+	google.golang.org/genproto v0.0.0-20220628213854-d9e0b6570c03 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	istio.io/api v0.0.0-20220512181135-e8ec1e1d89de // indirect
-	istio.io/client-go v1.14.0 // indirect
+	istio.io/api v0.0.0-20221013011440-bc935762d2b9 // indirect
+	istio.io/client-go v1.15.3 // indirect
 	k8s.io/apiextensions-apiserver v0.25.0 // indirect
 	k8s.io/apiserver v0.25.0 // indirect
-	k8s.io/autoscaler/vertical-pod-autoscaler v0.11.0 // indirect
+	k8s.io/autoscaler/vertical-pod-autoscaler v0.12.0 // indirect
 	k8s.io/gengo v0.0.0-20211129171323-c02415ce4185 // indirect
 	k8s.io/helm v2.16.1+incompatible // indirect
 	k8s.io/klog v1.0.0 // indirect
@@ -111,20 +111,10 @@ require (
 	k8s.io/metrics v0.25.0 // indirect
 	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed // indirect
 	sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20220706173534-cd0058ad295c // indirect
-	sigs.k8s.io/controller-tools v0.9.2 // indirect
+	sigs.k8s.io/controller-tools v0.10.0 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace (
-	k8s.io/api => k8s.io/api v0.25.0
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.25.0
-	k8s.io/apimachinery => k8s.io/apimachinery v0.25.0
-	k8s.io/autoscaler => k8s.io/autoscaler v0.0.0-20220531185024-cc90d57b7fe1 // translates to k8s.io/autoscaler/vertical-pod-autoscaler@v0.11.0
-	k8s.io/autoscaler/vertical-pod-autoscaler => k8s.io/autoscaler/vertical-pod-autoscaler v0.11.0
-	k8s.io/client-go => k8s.io/client-go v0.25.0
-	k8s.io/code-generator => k8s.io/code-generator v0.25.0
-	k8s.io/component-base => k8s.io/component-base v0.25.0
-	k8s.io/helm => k8s.io/helm v2.16.1+incompatible
-)
+replace k8s.io/client-go => k8s.io/client-go v0.25.0

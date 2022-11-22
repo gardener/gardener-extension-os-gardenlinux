@@ -63,6 +63,8 @@ var (
 	ConstraintK8sGreaterEqual125 *semver.Constraints
 	// ConstraintK8sLess125 is a version constraint for versions < 1.25.
 	ConstraintK8sLess125 *semver.Constraints
+	// ConstraintK8sGreaterEqual126 is a version constraint for versions >= 1.26.
+	ConstraintK8sGreaterEqual126 *semver.Constraints
 )
 
 func init() {
@@ -108,6 +110,8 @@ func init() {
 	utilruntime.Must(err)
 	ConstraintK8sLess125, err = semver.NewConstraint("< 1.25")
 	utilruntime.Must(err)
+	ConstraintK8sGreaterEqual126, err = semver.NewConstraint(">= 1.26")
+	utilruntime.Must(err)
 }
 
 // CompareVersions returns true if the constraint <version1> compared by <operator> to <version2>
@@ -116,14 +120,15 @@ func init() {
 // if needed.
 func CompareVersions(version1, operator, version2 string) (bool, error) {
 	var (
-		v1 = normalizeVersion(version1)
-		v2 = normalizeVersion(version2)
+		v1 = Normalize(version1)
+		v2 = Normalize(version2)
 	)
 
 	return CheckVersionMeetsConstraint(v1, fmt.Sprintf("%s %s", operator, v2))
 }
 
-func normalizeVersion(version string) string {
+// Normalize normalizes the version by cutting prefixes and suffixes.
+func Normalize(version string) string {
 	v := strings.Replace(version, "v", "", -1)
 	idx := strings.IndexAny(v, "-+")
 	if idx != -1 {
@@ -139,7 +144,7 @@ func CheckVersionMeetsConstraint(version, constraint string) (bool, error) {
 		return false, err
 	}
 
-	v, err := semver.NewVersion(normalizeVersion(version))
+	v, err := semver.NewVersion(Normalize(version))
 	if err != nil {
 		return false, err
 	}
