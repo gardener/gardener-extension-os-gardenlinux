@@ -10,6 +10,15 @@ source "$(dirname "$0")/test-e2e-local.env"
 
 ginkgo_flags=
 
+seed_name="local";
+if [[ "${SHOOT_FAILURE_TOLERANCE_TYPE:-}" == "node" ]] ; then
+  seed_name="local-ha-single-zone"; 
+fi
+
+if [[ "${SHOOT_FAILURE_TOLERANCE_TYPE:-}" == "zone" ]] ; then
+  seed_name="local-ha-multi-zone"; 
+fi
+
 shoot_names=(
   e2e-managedseed.garden
   e2e-hibernated.local
@@ -18,6 +27,8 @@ shoot_names=(
   e2e-migrate.local
   e2e-rotate.local
   e2e-default.local
+  e2e-upgrade-node.local
+  e2e-upgrade-zone.local
 )
 
 # If running in prow, we want to generate a machine-readable output file under the location specified via $ARTIFACTS.
@@ -30,7 +41,7 @@ if [ -n "${CI:-}" -a -n "${ARTIFACTS:-}" ]; then
   for shoot in "${shoot_names[@]}" ; do
     printf "\n127.0.0.1 api.%s.external.local.gardener.cloud\n127.0.0.1 api.%s.internal.local.gardener.cloud\n" $shoot $shoot >>/etc/hosts
   done
-  printf "\n127.0.0.1 gu-local--e2e-rotate.ingress.local.seed.local.gardener.cloud\n" >>/etc/hosts
+  printf "\n127.0.0.1 gu-local--e2e-rotate.ingress.$seed_name.seed.local.gardener.cloud\n" >>/etc/hosts
   printf "\n127.0.0.1 api.e2e-managedseed.garden.external.local.gardener.cloud\n127.0.0.1 api.e2e-managedseed.garden.internal.local.gardener.cloud\n" >>/etc/hosts
 else
   for shoot in "${shoot_names[@]}" ; do

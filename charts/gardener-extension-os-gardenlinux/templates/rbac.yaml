@@ -49,23 +49,37 @@ rules:
   - create
 - apiGroups:
   - ""
-  - coordination.k8s.io
   resources:
   - configmaps
-  - leases
   verbs:
   - create
 - apiGroups:
   - ""
-  - coordination.k8s.io
   resources:
   - configmaps
-  - leases
   resourceNames:
   - gardenlinux-leader-election
   verbs:
   - get
   - watch
+  - update
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create 
+  - list 
+  - watch 
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  resourceNames:
+  - gardenlinux-leader-election
+  - gardener-extension-heartbeat 
+  verbs:
+  - get
   - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1

@@ -70,6 +70,7 @@ type ManagedSeedSpec struct {
 	// SeedTemplate is a template for a Seed object, that should be used to register a given cluster as a Seed.
 	// Either SeedTemplate or Gardenlet must be specified. When Seed is specified, the ManagedSeed controller will not deploy a gardenlet into the cluster
 	// and an existing gardenlet reconciling the new Seed is required.
+	// Deprecated: This field is deprecated and will be removed in a future version of Gardener. Define seed via `.spec.gardenlet.config` instead.
 	// +optional
 	SeedTemplate *gardencorev1beta1.SeedTemplate `json:"seedTemplate,omitempty" protobuf:"bytes,2,opt,name=seedTemplate"`
 	// Gardenlet specifies that the ManagedSeed controller should deploy a gardenlet into the cluster
@@ -108,10 +109,10 @@ type Gardenlet struct {
 // GardenletDeployment specifies certain gardenlet deployment parameters, such as the number of replicas,
 // the image, etc.
 type GardenletDeployment struct {
-	// ReplicaCount is the number of gardenlet replicas. Defaults to 1.
+	// ReplicaCount is the number of gardenlet replicas. Defaults to 2.
 	// +optional
 	ReplicaCount *int32 `json:"replicaCount,omitempty" protobuf:"varint,1,opt,name=replicaCount"`
-	// RevisionHistoryLimit is the number of old gardenlet ReplicaSets to retain to allow rollback. Defaults to 10.
+	// RevisionHistoryLimit is the number of old gardenlet ReplicaSets to retain to allow rollback. Defaults to 2.
 	// +optional
 	RevisionHistoryLimit *int32 `json:"revisionHistoryLimit,omitempty" protobuf:"varint,2,opt,name=revisionHistoryLimit"`
 	// ServiceAccountName is the name of the ServiceAccount to use to run gardenlet pods.

@@ -1770,6 +1770,31 @@ func (in *KubeletConfig) DeepCopyInto(out *KubeletConfig) {
 		*out = new(int32)
 		**out = **in
 	}
+	if in.SeccompDefault != nil {
+		in, out := &in.SeccompDefault, &out.SeccompDefault
+		*out = new(bool)
+		**out = **in
+	}
+	if in.ContainerLogMaxSize != nil {
+		in, out := &in.ContainerLogMaxSize, &out.ContainerLogMaxSize
+		x := (*in).DeepCopy()
+		*out = &x
+	}
+	if in.ContainerLogMaxFiles != nil {
+		in, out := &in.ContainerLogMaxFiles, &out.ContainerLogMaxFiles
+		*out = new(int32)
+		**out = **in
+	}
+	if in.ProtectKernelDefaults != nil {
+		in, out := &in.ProtectKernelDefaults, &out.ProtectKernelDefaults
+		*out = new(bool)
+		**out = **in
+	}
+	if in.StreamingConnectionIdleTimeout != nil {
+		in, out := &in.StreamingConnectionIdleTimeout, &out.StreamingConnectionIdleTimeout
+		*out = new(metav1.Duration)
+		**out = **in
+	}
 	return
 }
 
@@ -2478,6 +2503,11 @@ func (in *NodeLocalDNS) DeepCopyInto(out *NodeLocalDNS) {
 	}
 	if in.ForceTCPToUpstreamDNS != nil {
 		in, out := &in.ForceTCPToUpstreamDNS, &out.ForceTCPToUpstreamDNS
+		*out = new(bool)
+		**out = **in
+	}
+	if in.DisableForwardToUpstreamDNS != nil {
+		in, out := &in.DisableForwardToUpstreamDNS, &out.DisableForwardToUpstreamDNS
 		*out = new(bool)
 		**out = **in
 	}
@@ -3222,6 +3252,11 @@ func (in *SeedProvider) DeepCopyInto(out *SeedProvider) {
 		in, out := &in.ProviderConfig, &out.ProviderConfig
 		*out = new(runtime.RawExtension)
 		(*in).DeepCopyInto(*out)
+	}
+	if in.Zones != nil {
+		in, out := &in.Zones, &out.Zones
+		*out = make([]string, len(*in))
+		copy(*out, *in)
 	}
 	return
 }
