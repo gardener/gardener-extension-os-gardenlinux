@@ -1,0 +1,37 @@
+name: Vendor Gardener
+on:
+  push:
+    branches:
+      - dependabot/go_modules/github.com/gardener/**
+  pull_request:
+    branches:
+      - dependabot/go_modules/github.com/gardener/**
+
+permissions: write-all
+
+jobs:
+  run:
+    name: Run make revendor
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '^1.19.2'
+          
+      - name: Make revendor
+        run: make revendor
+
+      - name: Perms
+        run: chmod +x .github/dep_test.sh
+
+      - name: Dependancy test
+        run: .github/dep_test.sh
+      
+      - name: Commit changes
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "make revendor"
+          git push origin
