@@ -26,7 +26,7 @@ jobs:
         run: chmod +x .github/dep_test.sh && chmod +x .github/foo.sh
         
       - name: Foo
-        run: github/foo.sh
+        run: .github/foo.sh
 
       - name: Dependancy test
         run: .github/dep_test.sh
