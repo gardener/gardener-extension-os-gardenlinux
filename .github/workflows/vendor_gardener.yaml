@@ -19,26 +19,14 @@ jobs:
         with:
           go-version: '^1.19.2'
           
+      - name: Use gardener's replaced client-go version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: .github/client_go_replace.sh
+      
       - name: Make revendor
         run: make revendor
 
-      - name: Perms
-        run: chmod +x .github/dep_test.sh && chmod +x .github/foo.sh && chmod +x .github/bar.sh
-        
-      - name: Bar
-        run: .github/bar.sh
-
-      - name: Foo
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO_DIR: ${{ github.workspace }}
-        run: .github/foo.sh
-
-      - name: Dependancy test
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: .github/dep_test.sh
-      
       - name: Commit changes
         run: |
           git config user.name github-actions
