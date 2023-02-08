@@ -38,4 +38,3 @@ jobs:
           git add .
           git commit -m "make revendor"
           git push origin
-gardener-extension-os-gardenlinux/vendor_gardener.yaml at master · Kostov6/gardener-extension-os-gardenlinux
