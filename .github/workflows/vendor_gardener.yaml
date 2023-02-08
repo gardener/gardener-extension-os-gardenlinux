@@ -23,7 +23,10 @@ jobs:
         run: make revendor
 
       - name: Perms
-        run: chmod +x .github/dep_test.sh && chmod +x .github/foo.sh
+        run: chmod +x .github/dep_test.sh && chmod +x .github/foo.sh && chmod +x .github/bar.sh
+        
+      - name: Bar
+        run: .github/bar.sh
         
       - name: Foo
         env:
