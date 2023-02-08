@@ -26,6 +26,8 @@ jobs:
         run: chmod +x .github/dep_test.sh && chmod +x .github/foo.sh
         
       - name: Foo
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: .github/foo.sh
 
       - name: Dependancy test
