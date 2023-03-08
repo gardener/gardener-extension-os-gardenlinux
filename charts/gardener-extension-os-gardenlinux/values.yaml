@@ -26,3 +26,9 @@ disableControllers: []
 
 gardener:
   version: ""
+
+# settings for metrics, e.g. scraping by seed-prometheus
+metrics:
+  # enable metrics scraping
+  enableScraping: true
+  port: 8080
