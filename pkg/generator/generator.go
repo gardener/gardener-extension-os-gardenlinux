@@ -63,8 +63,10 @@ func additionalValues(*extensionsv1alpha1.OperatingSystemConfig) (map[string]int
 // Generate generates a Garden Linux specific cloud-init script from the given OperatingSystemConfig.
 func (g *GardenLinuxCloudInitGenerator) Generate(logger logr.Logger, osc *generator.OperatingSystemConfig) ([]byte, *string, error) {
 
+	// we are only setting this up if the worker pool is configured with containerd
 	if osc.Object.Spec.Type == gardenlinux.OSTypeGardenLinux &&
-		osc.Object.Spec.Purpose == extensionsv1alpha1.OperatingSystemConfigPurposeReconcile {
+		osc.Object.Spec.Purpose == extensionsv1alpha1.OperatingSystemConfigPurposeReconcile &&
+		osc.CRI != nil && osc.CRI.Name == extensionsv1alpha1.CRINameContainerD {
 
 		// add additional scripts that are provided in the embedded fs
 		additionalScripts, err := gardenlinux.GetAdditionalScripts()
@@ -82,15 +84,14 @@ func (g *GardenLinuxCloudInitGenerator) Generate(logger logr.Logger, osc *genera
 		osc.Units = append(osc.Units, kubeletCgroupdriverDropin...)
 
 		// add scripts and dropins for containerd if activated
-		if osc.CRI != nil && osc.CRI.Name == extensionsv1alpha1.CRINameContainerD {
-			containerdCgroupdriverScript, containerdCgroupdriverDropin, err := gardenlinux.ContainerdCgroupDriver()
-			if err != nil {
-				return nil, nil, err
-			}
-
-			osc.Files = append(osc.Files, containerdCgroupdriverScript...)
-			osc.Units = append(osc.Units, containerdCgroupdriverDropin...)
+		containerdCgroupdriverScript, containerdCgroupdriverDropin, err := gardenlinux.ContainerdCgroupDriver()
+		if err != nil {
+			return nil, nil, err
 		}
+
+		osc.Files = append(osc.Files, containerdCgroupdriverScript...)
+		osc.Units = append(osc.Units, containerdCgroupdriverDropin...)
+
 	}
 
 	return g.cloudInitGenerator.Generate(logger, osc)
