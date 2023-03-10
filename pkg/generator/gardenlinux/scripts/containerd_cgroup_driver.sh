@@ -23,4 +23,6 @@ function configure_containerd {
     fi
 }
 
-configure_containerd "$(check_current_cgroup)"
+if check_running_containerd_tasks; then
+    configure_containerd "$(check_current_cgroup)"
+fi

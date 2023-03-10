@@ -39,3 +39,15 @@ function check_current_cgroup {
     echo "failed to determine cgroup version for this system" >&2
     exit 1
 }
+
+function check_running_containerd_tasks {
+    # determine if containerd has running containers in the k8s.io namespace
+
+    running_containers="$(ctr -n k8s.io task list | tail -n +2)"
+
+    if [ -z "$running_containers" ]; then
+        return 0
+    fi
+
+    return 1
+}

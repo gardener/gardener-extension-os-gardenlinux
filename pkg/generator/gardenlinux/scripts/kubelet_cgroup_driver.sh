@@ -23,4 +23,6 @@ function configure_kubelet {
     fi
 }
 
-configure_kubelet "$(check_current_cgroup)"
+if check_running_containerd_tasks; then
+    configure_kubelet "$(check_current_cgroup)"
+fi
