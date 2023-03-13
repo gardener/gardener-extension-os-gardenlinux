@@ -17,9 +17,18 @@ spec:
       app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
+      {{- if and .Values.metrics.enableScraping }}
+      annotations:
+        prometheus.io/name: "{{ .Release.Name }}"
+        prometheus.io/scrape: "true"
+        # default metrics endpoint in controller-runtime
+        prometheus.io/port: "{{ .Values.metrics.port }}"
+      {{- end }}
       labels:
         app.kubernetes.io/name: gardener-extension-os-gardenlinux
         app.kubernetes.io/instance: {{ .Release.Name }}
+        networking.gardener.cloud/to-runtime-apiserver: allowed
+        networking.gardener.cloud/to-dns: allowed
     spec:
       priorityClassName: gardener-system-900
       serviceAccountName: gardener-extension-os-gardenlinux
@@ -36,6 +45,7 @@ spec:
         - --disable-controllers={{ .Values.disableControllers | join "," }}
         - --ignore-operation-annotation={{ .Values.controllers.ignoreOperationAnnotation }}
         - --gardener-version={{ .Values.gardener.version }}
+        - --metrics-bind-address=:{{ .Values.metrics.port }}
         env:
         - name: LEADER_ELECTION_NAMESPACE
           valueFrom:
