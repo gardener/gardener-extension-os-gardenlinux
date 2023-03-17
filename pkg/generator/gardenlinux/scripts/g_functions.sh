@@ -58,6 +58,6 @@ function check_running_containerd_tasks {
         return 0
     fi
 
-    echo "there are $num_tasks active tasks in the k8s.io containerd namespace"
+    echo "there are $num_tasks active tasks in the k8s.io containerd namespace - terminating"
     return 1
 }

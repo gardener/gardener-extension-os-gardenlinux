@@ -25,4 +25,11 @@ function configure_containerd {
 
 if check_running_containerd_tasks; then
     configure_containerd "$(check_current_cgroup)"
+
+    # in rare cases it could be that the kubelet.service was already running when
+    # containerd got reconfigured so we restart it to force its ExecStartPre
+    if systemctl is-active kubelet.service; then
+        echo "triggering kubelet restart..."
+        systemctl restart --no-block kubelet.service
+    fi
 fi
