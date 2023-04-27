@@ -22,7 +22,7 @@ jobs:
     - name: Commit changes
       run: |
         git config user.name gardener-robot-ci-1
-        git config user.email gardener.ci.user1@gmail.com
+        git config user.email gardener.ci.user@gmail.com
         git add .
         git commit -m "[dependabot skip] make revendor"
         git push origin
