@@ -18,13 +18,13 @@ import (
 	"embed"
 	"path/filepath"
 
-	"github.com/go-logr/logr"
-
-	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator/gardenlinux"
 	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/generator"
 	ostemplate "github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/template"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
+	"github.com/go-logr/logr"
 	runtimeutils "k8s.io/apimachinery/pkg/util/runtime"
+
+	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator/gardenlinux"
 )
 
 var (
