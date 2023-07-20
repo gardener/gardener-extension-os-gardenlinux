@@ -25,6 +25,7 @@ import (
 	runtimeutils "k8s.io/apimachinery/pkg/util/runtime"
 
 	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator/gardenlinux"
+	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator/memoryone"
 )
 
 var (
@@ -51,20 +52,33 @@ func init() {
 	cloudInitGenerator = &GardenLinuxCloudInitGenerator{
 		cloudInitGenerator: ostemplate.NewCloudInitGenerator(cloudInitTemplate, ostemplate.DefaultUnitsPath, cmd, additionalValues),
 	}
+
 }
 
 // additionalValues provides additional values to the cloud-init template
-func additionalValues(*extensionsv1alpha1.OperatingSystemConfig) (map[string]interface{}, error) {
-	return map[string]interface{}{
+func additionalValues(osc *extensionsv1alpha1.OperatingSystemConfig) (map[string]interface{}, error) {
+	values := map[string]interface{}{
 		"unitsToEnable": unitsToEnable,
-	}, nil
+	}
+
+	if err := memoryone.MemoryOneValues(osc, values); err != nil {
+		return nil, err
+	}
+
+	return values, nil
+}
+
+// isSupportedOscType checks if the OperatingSystemConfig's type is one of those for which this extension is responsbile
+func isSupportedOscType(osc *generator.OperatingSystemConfig) bool {
+	return osc.Object.Spec.Type == gardenlinux.OSTypeGardenLinux ||
+		osc.Object.Spec.Type == memoryone.OSTypeMemoryOneGardenLinux
 }
 
 // Generate generates a Garden Linux specific cloud-init script from the given OperatingSystemConfig.
 func (g *GardenLinuxCloudInitGenerator) Generate(logger logr.Logger, osc *generator.OperatingSystemConfig) ([]byte, *string, error) {
 
 	// we are only setting this up if the worker pool is configured with containerd
-	if osc.Object.Spec.Type == gardenlinux.OSTypeGardenLinux &&
+	if isSupportedOscType(osc) &&
 		osc.Object.Spec.Purpose == extensionsv1alpha1.OperatingSystemConfigPurposeReconcile &&
 		osc.CRI != nil && osc.CRI.Name == extensionsv1alpha1.CRINameContainerD {
 

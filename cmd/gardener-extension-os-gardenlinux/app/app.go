@@ -35,11 +35,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator"
+	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator/gardenlinux"
+	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator/memoryone"
 )
 
 var (
 	ctrlName = "gardenlinux"
-	osTypes  = []string{"gardenlinux"}
+	osTypes  = []string{gardenlinux.OSTypeGardenLinux, memoryone.OSTypeMemoryOneGardenLinux}
 )
 
 // NewControllerCommand returns a new Command with a new Generator

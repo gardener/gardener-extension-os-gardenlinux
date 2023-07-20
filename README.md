@@ -3,24 +3,54 @@
 [![CI Build status](https://concourse.ci.gardener.cloud/api/v1/teams/gardener/pipelines/gardener-extension-os-gardenlinux-master/jobs/master-head-update-job/badge)](https://concourse.ci.gardener.cloud/teams/gardener/pipelines/gardener-extension-os-gardenlinux-master/jobs/master-head-update-job)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gardener/gardener-extension-os-gardenlinux)](https://goreportcard.com/report/github.com/gardener/gardener-extension-os-gardenlinux)
 
-This controller operates on the [`OperatingSystemConfig`](https://github.com/gardener/gardener/blob/master/docs/proposals/01-extensibility.md#cloud-config-user-data-for-bootstrapping-machines) resource in the `extensions.gardener.cloud/v1alpha1` API group. It manages those objects that are requesting [Garden Linux OS](https://gardenlinux.io/) configuration (`.spec.type=gardenlinux`):
+This controller operates on the [`OperatingSystemConfig`](https://github.com/gardener/gardener/blob/master/docs/proposals/01-extensibility.md#cloud-config-user-data-for-bootstrapping-machines) resource in the `extensions.gardener.cloud/v1alpha1` API group. 
 
-```yaml
----
-apiVersion: extensions.gardener.cloud/v1alpha1
-kind: OperatingSystemConfig
-metadata:
-  name: pool-01-original
-  namespace: default
-spec:
-  type: gardenlinux
-  units:
-    ...
-  files:
-    ...
-```
+It manages those objects that are requesting...
 
-Please find [a concrete example](example/40-operatingsystemconfig.yaml) in the `example` folder.
+- [Garden Linux OS](https://gardenlinux.io/) configuration (`.spec.type=gardenlinux`):
+
+  ```yaml
+  ---
+  apiVersion: extensions.gardener.cloud/v1alpha1
+  kind: OperatingSystemConfig
+  metadata:
+    name: pool-01-original
+    namespace: default
+  spec:
+    type: gardenlinux
+    units:
+      ...
+    files:
+      ...
+  ```
+
+  Please find [a concrete example](example/40-operatingsystemconfig-gardenlinux.yaml) in the `example` folder.
+
+
+- MemoryOne on Garden Linux configuration (`spec.type=memoryone-gardenlinux`):
+
+  ```yaml
+  ---
+  apiVersion: extensions.gardener.cloud/v1alpha1
+  kind: OperatingSystemConfig
+  metadata:
+    name: pool-01-original
+    namespace: default
+  spec:
+    type: memoryone-gardenlinux
+    units:
+      ...
+    files:
+      ...
+    providerConfig:
+      apiVersion: memoryone-gardenlinux.os.extensions.gardener.cloud/v1alpha1
+      kind: OperatingSystemConfiguration
+      memoryTopology: "2"
+      systemMemory: "6x"
+  ```
+
+  Please find [a concrete example](example/40-operatingsystemconfig-memoryonegardenlinux.yaml) in the `example` folder.
+
 
 After reconciliation the resulting data will be stored in a secret within the same namespace (as the config itself might contain confidential data). The name of the secret will be written into the resource's `.status` field:
 
@@ -43,7 +73,7 @@ The secret has one data key `cloud_config` that stores the generation.
 
 An example for a `ControllerRegistration` resource that can be used to register this controller to Gardener can be found [here](example/controller-registration.yaml).
 
-This controller is based on revision [b5ba8164](https://github.com/gardener/gardener-extension-os-ubuntu-alicloud/commit/b5ba8164ed4c52872b1d4bd5ee3eaa4ed58da966) of [gardener-extension-os-ubuntu-alicloud](https://github.com/gardener/gardener-extension-os-ubuntu-alicloud). Its implementation is using the [`oscommon`](https://github.com/gardener/gardener/blob/master/extensions/pkg/controller/operatingsystemconfig/oscommon/README.md) library for operating system configuration controllers.
+The implementation of this controller is using Gardeners [`oscommon`](https://github.com/gardener/gardener/blob/master/extensions/pkg/controller/operatingsystemconfig/oscommon/README.md) library for operating system configuration controllers.
 
 Please find more information regarding the extensibility concepts and a detailed proposal [here](https://github.com/gardener/gardener/blob/master/docs/proposals/01-extensibility.md).
 

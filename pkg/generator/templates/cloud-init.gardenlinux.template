@@ -1,5 +1,20 @@
+{{- if and (eq .Type "memoryone-gardenlinux") .Bootstrap -}}
+Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+MIME-Version: 1.0
+--==BOUNDARY==
+Content-Type: text/x-vsmp; section=vsmp
+{{- if .AdditionalValues.MemoryOneSystemMemory }}
+system_memory={{ .AdditionalValues.MemoryOneSystemMemory }}
+{{- end }}
+{{- if .AdditionalValues.MemoryOneMemoryTopology }}
+mem_topology={{ .AdditionalValues.MemoryOneMemoryTopology }}
+{{- end }}
+--==BOUNDARY==
+Content-Type: text/x-shellscript
 #!/bin/bash
-
+{{- else -}}
+#!/bin/bash
+{{- end -}}
 {{- define "put-content" -}}
 cat << EOF | base64 -d > '{{ .Path }}'
 {{ .Content }}
@@ -64,4 +79,8 @@ systemctl enable containerd && systemctl restart containerd
 {{- end }}
 systemctl enable docker && systemctl restart docker
 systemctl enable cloud-config-downloader && systemctl restart cloud-config-downloader
+{{- end }}
+{{- if and (eq .Type "memoryone-gardenlinux") .Bootstrap }}
+
+--==BOUNDARY==
 {{- end }}

@@ -21,9 +21,13 @@ import (
 	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
 
+	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/apis/memoryonegardenlinux/v1alpha1"
 	gardenlinux_generator "github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator"
 	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator/gardenlinux"
+	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator/memoryone"
 	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator/testfiles"
 )
 
@@ -61,7 +65,40 @@ dataKey: token`)
 		Name: extensionsv1alpha1.CRINameContainerD,
 	}
 
-	osctemplate = commongen.OperatingSystemConfig{
+	units = []*commongen.Unit{
+		{
+			Name:    unit1,
+			Content: unitContent,
+		},
+		{
+			Name:    unit2,
+			Content: unitContent,
+			DropIns: []*commongen.DropIn{
+				{
+					Name:    dropin,
+					Content: dropinContent,
+				},
+			},
+		},
+		{
+			Name: ccdService,
+		},
+	}
+
+	files = []*commongen.File{
+		{
+			Path:        filePath,
+			Content:     fileContent,
+			Permissions: &permissions,
+		},
+	}
+
+	memoryOneOsConfig = &v1alpha1.OperatingSystemConfiguration{
+		MemoryTopology: pointer.String("3"),
+		SystemMemory:   pointer.String("7x"),
+	}
+
+	gardenlinuxOsctemplate = commongen.OperatingSystemConfig{
 		Object: &extensionsv1alpha1.OperatingSystemConfig{
 			Spec: extensionsv1alpha1.OperatingSystemConfigSpec{
 				Purpose: extensionsv1alpha1.OperatingSystemConfigPurposeProvision,
@@ -70,32 +107,24 @@ dataKey: token`)
 				},
 			},
 		},
-		Units: []*commongen.Unit{
-			{
-				Name:    unit1,
-				Content: unitContent,
-			},
-			{
-				Name:    unit2,
-				Content: unitContent,
-				DropIns: []*commongen.DropIn{
-					{
-						Name:    dropin,
-						Content: dropinContent,
+		Units: units,
+		Files: files,
+	}
+
+	memoryOneOscTemplate = commongen.OperatingSystemConfig{
+		Object: &extensionsv1alpha1.OperatingSystemConfig{
+			Spec: extensionsv1alpha1.OperatingSystemConfigSpec{
+				Purpose: extensionsv1alpha1.OperatingSystemConfigPurposeProvision,
+				DefaultSpec: extensionsv1alpha1.DefaultSpec{
+					Type: memoryone.OSTypeMemoryOneGardenLinux,
+					ProviderConfig: &runtime.RawExtension{
+						Raw: encode(memoryOneOsConfig),
 					},
 				},
 			},
-			{
-				Name: ccdService,
-			},
 		},
-		Files: []*commongen.File{
-			{
-				Path:        filePath,
-				Content:     fileContent,
-				Permissions: &permissions,
-			},
-		},
+		Units: units,
+		Files: files,
 	}
 
 	osc commongen.OperatingSystemConfig
@@ -103,75 +132,174 @@ dataKey: token`)
 
 var _ = Describe("Garden Linux OS Generator Test", func() {
 
-	Describe("Conformance Tests Bootstrap", func() {
-		g := gardenlinux_generator.CloudInitGenerator()
-		test.DescribeTest(gardenlinux_generator.CloudInitGenerator(), testfiles.Files)()
+	Context("Garden Linux", func() {
 
-		BeforeEach(func() {
-			osc = osctemplate
-			osc.Bootstrap = true
-			osc.Object.Spec.Purpose = extensionsv1alpha1.OperatingSystemConfigPurposeProvision
+		Describe("Conformance Tests Bootstrap", func() {
+			g := gardenlinux_generator.CloudInitGenerator()
+			test.DescribeTest(gardenlinux_generator.CloudInitGenerator(), testfiles.Files)()
+
+			BeforeEach(func() {
+				osc = gardenlinuxOsctemplate
+				osc.Bootstrap = true
+				osc.Object.Spec.Purpose = extensionsv1alpha1.OperatingSystemConfigPurposeProvision
+			})
+
+			It("[docker] [bootstrap] should render correctly", func() {
+				e, err := testfiles.Files.ReadFile("docker-bootstrap")
+				expectedCloudInit := byteSlice(e)
+				Expect(err).NotTo(HaveOccurred())
+
+				osc.CRI = nil
+				c, _, err := g.Generate(logger, &osc)
+				cloudInit := byteSlice(c)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cloudInit).To(Equal(expectedCloudInit))
+			})
+
+			It("[containerd] [bootstrap] should render correctly", func() {
+				e, err := testfiles.Files.ReadFile("containerd-bootstrap")
+				expectedCloudInit := byteSlice(e)
+				Expect(err).NotTo(HaveOccurred())
+
+				osc.CRI = &criConfigContainerd
+				c, _, err := g.Generate(logger, &osc)
+				cloudInit := byteSlice(c)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cloudInit).To(Equal(expectedCloudInit))
+			})
 		})
 
-		It("[docker] [bootstrap] should render correctly", func() {
-			e, err := testfiles.Files.ReadFile("docker-bootstrap")
-			expectedCloudInit := byteSlice(e)
-			Expect(err).NotTo(HaveOccurred())
+		Describe("Conformance Tests Reconcile", func() {
+			var g = gardenlinux_generator.CloudInitGenerator()
 
-			osc.CRI = nil
-			c, _, err := g.Generate(logger, &osc)
-			cloudInit := byteSlice(c)
+			BeforeEach(func() {
+				osc = gardenlinuxOsctemplate
+				osc.Bootstrap = false
+				osc.Object.Spec.Purpose = extensionsv1alpha1.OperatingSystemConfigPurposeReconcile
+			})
 
-			Expect(err).NotTo(HaveOccurred())
-			Expect(cloudInit).To(Equal(expectedCloudInit))
-		})
+			It("[docker] [reconcile] should render correctly", func() {
+				e, err := testfiles.Files.ReadFile("docker-reconcile")
+				Expect(err).NotTo(HaveOccurred())
+				expectedCloudInit := byteSlice(e)
 
-		It("[containerd] [bootstrap] should render correctly", func() {
-			e, err := testfiles.Files.ReadFile("containerd-bootstrap")
-			expectedCloudInit := byteSlice(e)
-			Expect(err).NotTo(HaveOccurred())
+				c, _, err := g.Generate(logger, &osc)
+				cloudInit := byteSlice(c)
 
-			osc.CRI = &criConfigContainerd
-			c, _, err := g.Generate(logger, &osc)
-			cloudInit := byteSlice(c)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cloudInit).To(Equal(expectedCloudInit))
+			})
 
-			Expect(err).NotTo(HaveOccurred())
-			Expect(cloudInit).To(Equal(expectedCloudInit))
+			It("[containerd] [reconcile] should render correctly", func() {
+				e, err := testfiles.Files.ReadFile("containerd-reconcile")
+				Expect(err).NotTo(HaveOccurred())
+				expectedCloudInit := byteSlice(e)
+
+				osc.CRI = &criConfigContainerd
+				c, _, err := g.Generate(logger, &osc)
+				cloudInit := byteSlice(c)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cloudInit).To(Equal(expectedCloudInit))
+			})
 		})
 	})
 
-	Describe("Conformance Tests Reconcile", func() {
-		var g = gardenlinux_generator.CloudInitGenerator()
+	Context("MemoryOne on Garden Linux", func() {
 
 		BeforeEach(func() {
-			osc = osctemplate
-			osc.Bootstrap = false
-			osc.Object.Spec.Purpose = extensionsv1alpha1.OperatingSystemConfigPurposeReconcile
+			osc = memoryOneOscTemplate
 		})
 
-		It("[docker] [reconcile] should render correctly", func() {
-			e, err := testfiles.Files.ReadFile("docker-reconcile")
-			Expect(err).NotTo(HaveOccurred())
-			expectedCloudInit := byteSlice(e)
+		Describe("Conformance Tests Bootstrap", func() {
+			g := gardenlinux_generator.CloudInitGenerator()
+			test.DescribeTest(gardenlinux_generator.CloudInitGenerator(), testfiles.Files)()
 
-			c, _, err := g.Generate(logger, &osc)
-			cloudInit := byteSlice(c)
+			BeforeEach(func() {
+				osc.Bootstrap = true
+				osc.Object.Spec.Purpose = extensionsv1alpha1.OperatingSystemConfigPurposeProvision
+			})
 
-			Expect(err).NotTo(HaveOccurred())
-			Expect(cloudInit).To(Equal(expectedCloudInit))
+			It("should render correctly for docker", func() {
+				e, err := testfiles.Files.ReadFile("memoryone-docker-bootstrap")
+				expectedCloudInit := byteSlice(e)
+				Expect(err).NotTo(HaveOccurred())
+
+				osc.CRI = nil
+				c, _, err := g.Generate(logger, &osc)
+				cloudInit := byteSlice(c)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cloudInit).To(Equal(expectedCloudInit))
+			})
+
+			It("should render correctly for containerd", func() {
+				e, err := testfiles.Files.ReadFile("memoryone-containerd-bootstrap")
+				expectedCloudInit := byteSlice(e)
+				Expect(err).NotTo(HaveOccurred())
+
+				osc.CRI = &criConfigContainerd
+				c, _, err := g.Generate(logger, &osc)
+				cloudInit := byteSlice(c)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cloudInit).To(Equal(expectedCloudInit))
+			})
+
+			It("should render correctly with default values", func() {
+				e, err := testfiles.Files.ReadFile("memoryone-containerd-bootstrap-defaults")
+				expectedCloudInit := byteSlice(e)
+				Expect(err).NotTo(HaveOccurred())
+
+				emptyMemoryOneOsConfig := &v1alpha1.OperatingSystemConfiguration{}
+
+				osc.Object.Spec.ProviderConfig = &runtime.RawExtension{
+					Raw: encode(emptyMemoryOneOsConfig),
+				}
+
+				osc.CRI = &criConfigContainerd
+				c, _, err := g.Generate(logger, &osc)
+				cloudInit := byteSlice(c)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cloudInit).To(Equal(expectedCloudInit))
+			})
 		})
 
-		It("[containerd] [reconcile] should render correctly", func() {
-			e, err := testfiles.Files.ReadFile("containerd-reconcile")
-			Expect(err).NotTo(HaveOccurred())
-			expectedCloudInit := byteSlice(e)
+		Describe("Conformance Tests Reconcile", func() {
+			var g = gardenlinux_generator.CloudInitGenerator()
 
-			osc.CRI = &criConfigContainerd
-			c, _, err := g.Generate(logger, &osc)
-			cloudInit := byteSlice(c)
+			BeforeEach(func() {
+				osc.Bootstrap = false
+				osc.Object.Spec.Purpose = extensionsv1alpha1.OperatingSystemConfigPurposeReconcile
+			})
 
-			Expect(err).NotTo(HaveOccurred())
-			Expect(cloudInit).To(Equal(expectedCloudInit))
+			It("must not render memoryone contents during reconcile for docker", func() {
+				e, err := testfiles.Files.ReadFile("docker-reconcile")
+				Expect(err).NotTo(HaveOccurred())
+				expectedCloudInit := byteSlice(e)
+
+				c, _, err := g.Generate(logger, &osc)
+				cloudInit := byteSlice(c)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cloudInit).To(Equal(expectedCloudInit))
+			})
+
+			It("must not render memoryone contents during reconcile for containerd", func() {
+				e, err := testfiles.Files.ReadFile("containerd-reconcile")
+				Expect(err).NotTo(HaveOccurred())
+				expectedCloudInit := byteSlice(e)
+
+				osc.CRI = &criConfigContainerd
+				c, _, err := g.Generate(logger, &osc)
+				cloudInit := byteSlice(c)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cloudInit).To(Equal(expectedCloudInit))
+			})
 		})
 	})
 })

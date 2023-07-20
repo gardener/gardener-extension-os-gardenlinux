@@ -18,5 +18,5 @@ import "embed"
 
 // Files contains the contents of the testfiles directory
 //
-//go:embed cloud-* containerd-* docker-*
+//go:embed cloud-* containerd-* docker-* memoryone-*
 var Files embed.FS
