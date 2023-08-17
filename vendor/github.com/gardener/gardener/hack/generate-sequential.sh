@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright 2022 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+# Copyright 2023 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,23 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -o nounset
-set -o pipefail
-set -o errexit
+set -e
 
-source $(dirname "${0}")/ci-common.sh
+echo "> Generate"
 
-clamp_mss_to_pmtu
-
-# test setup
-make kind-up
-
-# export all container logs and events after test execution
-trap '{
-  export_artifacts "gardener-local"
-  make kind-down
-}' EXIT
-
-make gardener-up
-make test-e2e-local
-make gardener-down
+go generate $@
