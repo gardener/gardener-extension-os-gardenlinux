@@ -28,7 +28,16 @@ if check_running_containerd_tasks; then
 
     # in rare cases it could be that the kubelet.service was already running when
     # containerd got reconfigured so we restart it to force its ExecStartPre
-    if systemctl is-active kubelet.service; then
+    #
+    # following the systemd unit status definitions at
+    # https://github.com/systemd/systemd/blob/61afc53924dd3263e7b76b1323a5fe61d589ffd2/src/basic/unit-def.c#L99-L107
+    
+    kubelet_unit_status=$(systemctl show kubelet.service --property=ActiveState | cut -d "=" -f 2)
+
+    if  [ "$kubelet_unit_status" == "active" ] || \
+        [ "$kubelet_unit_status" == "activating" ] || \
+        [ "$kubelet_unit_status" == "reloading" ]; then
+
         echo "triggering kubelet restart..."
         systemctl restart --no-block kubelet.service
     fi
