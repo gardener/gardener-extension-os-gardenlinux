@@ -38,7 +38,6 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         command:
         - /gardener-extension-os-gardenlinux
-        - --leader-election-resource-lock={{ .Values.leaderElection.resourceLock }}
         - --max-concurrent-reconciles={{ .Values.controllers.concurrentSyncs }}
         - --heartbeat-namespace={{ .Release.Namespace }} 
         - --heartbeat-renew-interval-seconds={{ .Values.controllers.heartbeat.renewIntervalSeconds }} 
