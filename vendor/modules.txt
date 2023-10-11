@@ -76,9 +76,7 @@ github.com/gardener/gardener/extensions/pkg/controller/cmd
 github.com/gardener/gardener/extensions/pkg/controller/heartbeat
 github.com/gardener/gardener/extensions/pkg/controller/heartbeat/cmd
 github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig
-github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon
 github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/actuator
-github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/cmd
 github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/generator
 github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/generator/test
 github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/template
