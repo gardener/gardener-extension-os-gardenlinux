@@ -18,6 +18,8 @@ import (
 	"path/filepath"
 
 	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/generator"
+
+	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/gardenlinux"
 )
 
 var (
@@ -33,14 +35,14 @@ ExecStartPre=/opt/gardener/bin/kubelet_cgroup_driver.sh
 )
 
 func ContainerdCgroupDriver() ([]*generator.File, []*generator.Unit, error) {
-	containerdConfigureScriptContent, err := templates.ReadFile(filepath.Join("scripts", "containerd_cgroup_driver.sh"))
+	containerdConfigureScriptContent, err := gardenlinux.Templates.ReadFile(filepath.Join("scripts", "containerd_cgroup_driver.sh"))
 	if err != nil {
 		return nil, nil, err
 	}
 	containerdConfigureScript := &generator.File{
-		Path:        filepath.Join(scriptLocation, "containerd_cgroup_driver.sh"),
+		Path:        filepath.Join(gardenlinux.ScriptLocation, "containerd_cgroup_driver.sh"),
 		Content:     containerdConfigureScriptContent,
-		Permissions: &scriptPermissions,
+		Permissions: &gardenlinux.ScriptPermissions,
 	}
 	containerdDropin := &generator.Unit{
 		Name: "containerd.service",
@@ -56,14 +58,14 @@ func ContainerdCgroupDriver() ([]*generator.File, []*generator.Unit, error) {
 }
 
 func KubeletCgroupDriver() ([]*generator.File, []*generator.Unit, error) {
-	kubeletConfigureScriptContent, err := templates.ReadFile(filepath.Join("scripts", "kubelet_cgroup_driver.sh"))
+	kubeletConfigureScriptContent, err := gardenlinux.Templates.ReadFile(filepath.Join("scripts", "kubelet_cgroup_driver.sh"))
 	if err != nil {
 		return nil, nil, err
 	}
 	kubeletConfigureScript := &generator.File{
-		Path:        filepath.Join(scriptLocation, "kubelet_cgroup_driver.sh"),
+		Path:        filepath.Join(gardenlinux.ScriptLocation, "kubelet_cgroup_driver.sh"),
 		Content:     kubeletConfigureScriptContent,
-		Permissions: &scriptPermissions,
+		Permissions: &gardenlinux.ScriptPermissions,
 	}
 	kubeletDropin := &generator.Unit{
 		Name: "kubelet.service",

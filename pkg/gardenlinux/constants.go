@@ -15,35 +15,20 @@
 package gardenlinux
 
 import (
-	"path/filepath"
-
-	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/generator"
+	"embed"
 )
 
 var (
-	fileList = []string{
-		"g_functions.sh",
-	}
+	//go:embed scripts/*
+	Templates embed.FS
+
+	ScriptPermissions = int32(0755)
 )
 
-// GetAdditionalScripts returns additional scripts that were provided as raw files in the embedded fs
-func GetAdditionalScripts() ([]*generator.File, error) {
-	files := []*generator.File{}
+const (
+	// ScriptLocation is the location that Gardener configuration scripts end up on Garden Linux
+	ScriptLocation = "/opt/gardener/bin"
 
-	for _, f := range fileList {
-		scriptContent, err := templates.ReadFile(filepath.Join("scripts", f))
-		if err != nil {
-			return nil, err
-		}
-
-		additionalScript := &generator.File{
-			Path:        filepath.Join(scriptLocation, f),
-			Content:     scriptContent,
-			Permissions: &scriptPermissions,
-		}
-
-		files = append(files, additionalScript)
-	}
-
-	return files, nil
-}
+	// OSTypeGardenLinux is a constant for the Garden Linux extension OS type.
+	OSTypeGardenLinux = "gardenlinux"
+)

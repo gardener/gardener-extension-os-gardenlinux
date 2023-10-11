@@ -25,10 +25,9 @@ import (
 	"k8s.io/utils/pointer"
 
 	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/apis/memoryonegardenlinux/v1alpha1"
-	gardenlinux_generator "github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator"
-	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator/gardenlinux"
-	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator/memoryone"
-	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator/testfiles"
+	gardenlinux_generator "github.com/gardener/gardener-extension-os-gardenlinux/pkg/controller/operatingsystemconfig/generator"
+	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/controller/operatingsystemconfig/generator/testfiles"
+	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/memoryone"
 )
 
 type byteSlice []byte
@@ -103,7 +102,7 @@ dataKey: token`)
 			Spec: extensionsv1alpha1.OperatingSystemConfigSpec{
 				Purpose: extensionsv1alpha1.OperatingSystemConfigPurposeProvision,
 				DefaultSpec: extensionsv1alpha1.DefaultSpec{
-					Type: gardenlinux.OSTypeGardenLinux,
+					Type: "gardenlinux",
 				},
 			},
 		},

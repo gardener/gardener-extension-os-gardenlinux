@@ -33,23 +33,32 @@ func init() {
 	decoder = serializer.NewCodecFactory(scheme).UniversalDecoder()
 }
 
+func Configuration(osc *extensionsv1alpha1.OperatingSystemConfig) (*memoryonegardenlinux.OperatingSystemConfiguration, error) {
+	if osc.Spec.ProviderConfig == nil {
+		return nil, nil
+	}
+
+	obj := &memoryonegardenlinux.OperatingSystemConfiguration{}
+	if _, _, err := decoder.Decode(osc.Spec.ProviderConfig.Raw, nil, obj); err != nil {
+		return nil, fmt.Errorf("failed to decode provider config: %+v", err)
+	}
+
+	return obj, nil
+}
+
 func MemoryOneValues(osc *extensionsv1alpha1.OperatingSystemConfig, values map[string]interface{}) error {
 	if osc.Spec.Type == OSTypeMemoryOneGardenLinux {
-		if osc.Spec.ProviderConfig == nil {
-			return nil
+		config, err := Configuration(osc)
+		if err != nil {
+			return err
 		}
 
-		obj := &memoryonegardenlinux.OperatingSystemConfiguration{}
-		if _, _, err := decoder.Decode(osc.Spec.ProviderConfig.Raw, nil, obj); err != nil {
-			return fmt.Errorf("failed to decode provider config: %+v", err)
+		if config.MemoryTopology != nil {
+			values["MemoryOneMemoryTopology"] = *config.MemoryTopology
 		}
 
-		if obj.MemoryTopology != nil {
-			values["MemoryOneMemoryTopology"] = *obj.MemoryTopology
-		}
-
-		if obj.SystemMemory != nil {
-			values["MemoryOneSystemMemory"] = *obj.SystemMemory
+		if config.SystemMemory != nil {
+			values["MemoryOneSystemMemory"] = *config.SystemMemory
 		}
 	}
 
