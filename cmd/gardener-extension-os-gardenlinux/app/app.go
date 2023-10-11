@@ -23,19 +23,17 @@ import (
 	controllercmd "github.com/gardener/gardener/extensions/pkg/controller/cmd"
 	"github.com/gardener/gardener/extensions/pkg/controller/heartbeat"
 	heartbeatcmd "github.com/gardener/gardener/extensions/pkg/controller/heartbeat/cmd"
-	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon"
-	oscommoncmd "github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig/oscommon/cmd"
+	osccontroller "github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig"
 	"github.com/gardener/gardener/extensions/pkg/util"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	componentbaseconfig "k8s.io/component-base/config"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	runtimelog "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator"
-	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator/gardenlinux"
-	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/generator/memoryone"
+	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/controller/operatingsystemconfig"
+	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/gardenlinux"
+	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/memoryone"
 )
 
 var (
@@ -45,12 +43,6 @@ var (
 
 // NewControllerCommand returns a new Command with a new Generator
 func NewControllerCommand(ctx context.Context) *cobra.Command {
-	gardenLinuxGenerator := generator.CloudInitGenerator()
-	if gardenLinuxGenerator == nil {
-		runtimelog.Log.Error(fmt.Errorf("generator is nil"), "Error executing the main controller command")
-		os.Exit(1)
-	}
-
 	var (
 		generalOpts = &controllercmd.GeneralOptions{}
 		restOpts    = &controllercmd.RESTOptions{}
@@ -71,7 +63,10 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 
 		reconcileOpts = &controllercmd.ReconcilerOptions{}
 
-		controllerSwitches = oscommoncmd.SwitchOptions(ctrlName, osTypes, gardenLinuxGenerator)
+		controllerSwitches = controllercmd.NewSwitchOptions(
+			controllercmd.Switch(osccontroller.ControllerName, operatingsystemconfig.AddToManager),
+			controllercmd.Switch(heartbeat.ControllerName, heartbeat.AddToManager),
+		)
 
 		aggOption = controllercmd.NewOptionAggregator(
 			generalOpts,
@@ -120,10 +115,10 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 				return fmt.Errorf("could not update manager scheme: %w", err)
 			}
 
-			ctrlOpts.Completed().Apply(&oscommon.DefaultAddOptions.Controller)
+			ctrlOpts.Completed().Apply(&operatingsystemconfig.DefaultAddOptions.Controller)
 			heartbeatCtrlOpts.Completed().Apply(&heartbeat.DefaultAddOptions)
 
-			reconcileOpts.Completed().Apply(&oscommon.DefaultAddOptions.IgnoreOperationAnnotation)
+			reconcileOpts.Completed().Apply(&operatingsystemconfig.DefaultAddOptions.IgnoreOperationAnnotation)
 
 			if err := controllerSwitches.Completed().AddToManager(ctx, mgr); err != nil {
 				return fmt.Errorf("could not add controller to manager: %w", err)
