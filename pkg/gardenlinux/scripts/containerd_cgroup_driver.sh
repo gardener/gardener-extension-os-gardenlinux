@@ -4,9 +4,8 @@ set -Eeuo pipefail
 
 source "$(dirname $0)/g_functions.sh"
 
-# reconfigures containerd to use systemd as a cgroup driver on cgroup v2 enabled systems
+# reconfigures containerd to use systemd as a cgroup driver
 function configure_containerd {
-    desired_cgroup=$1
     CONTAINERD_CONFIG="/etc/containerd/config.toml"
 
     if [ ! -s "$CONTAINERD_CONFIG" ]; then
@@ -14,22 +13,17 @@ function configure_containerd {
         return
     fi
 
-    if [[ "$desired_cgroup" == "v2" ]]; then
-        echo "Configuring containerd cgroup driver to systemd"
-        sed -i "s/SystemdCgroup *= *false/SystemdCgroup = true/" "$CONTAINERD_CONFIG"
-    else
-        echo "Configuring containerd cgroup driver to cgroupfs"
-        sed -i "s/SystemdCgroup *= *true/SystemdCgroup = false/" "$CONTAINERD_CONFIG"
-    fi
+    echo "Setting containerd cgroup driver to systemd"
+    sed -i "s/SystemdCgroup *= *false/SystemdCgroup = true/" "$CONTAINERD_CONFIG"
 }
 
-if check_running_containerd_tasks; then
-    configure_containerd "$(check_current_cgroup)"
-
-    # in rare cases it could be that the kubelet.service was already running when
-    # containerd got reconfigured so we restart it to force its ExecStartPre
-    if systemctl is-active kubelet.service; then
-        echo "triggering kubelet restart..."
-        systemctl restart --no-block kubelet.service
-    fi
+# do not change the kubelet's configuration on an existing system with running containers
+if has_running_containerd_tasks; then
+    echo "Skip configuring the containerd cgroup driver on a node with running containers"
+    return
 fi
+
+# all recent/supported Gardenlinux versions mount cgroupsV2 only.
+# This extension version is only compatible with cgroupsv2-only GL versions, hence
+# can only be used in Gardener installations that have no cgroupsV1 Gl versions configured.
+configure_containerd

@@ -6,47 +6,24 @@ source "$(dirname $0)/g_functions.sh"
 
 KUBELET_CONFIG="/var/lib/kubelet/config/kubelet"
 
-# reconfigure the kubelet to use systemd as a cgroup driver on cgroup v2 enabled systems
-function configure_kubelet {
-    desired_cgroup_driver=$1
-
+# reconfigure the kubelet to use systemd as a cgroup driver
+function configure_kubelet_cgroup_driver {
     if [ ! -s "$KUBELET_CONFIG" ]; then
         echo "$KUBELET_CONFIG does not exist" >&2
         return
     fi
 
-    if [[ "$desired_cgroup_driver" == "systemd" ]]; then
-        echo "Configuring kubelet to use systemd as cgroup driver"
-        sed -i "s/cgroupDriver: cgroupfs/cgroupDriver: systemd/" "$KUBELET_CONFIG"
-    else
-        echo "Configuring kubelet to use cgroupfs as cgroup driver"
-        sed -i "s/cgroupDriver: systemd/cgroupDriver: cgroupfs/" "$KUBELET_CONFIG"
-    fi
+    echo "Configuring kubelet cgroup driver to systemd"
+    sed -i "s/cgroupDriver: cgroupfs/cgroupDriver: systemd/" "$KUBELET_CONFIG"
 }
 
-# determine which cgroup driver the kubelet is currently configured with
-function get_kubelet_cgroup_driver {
-    kubelet_cgroup_driver=$(grep cgroupDriver "$KUBELET_CONFIG" | awk -F ':' '{print $2}' | sed 's/^\W//g')
-    echo "$kubelet_cgroup_driver"
-}
-
-# determine which cgroup driver containerd is using - this requires that the SystemdCgroup is in containerds
-# running config - if it has been removed from the configfile, this will fail
-function get_containerd_cgroup_driver {
-    systemd_cgroup_driver=$(containerd config dump | grep SystemdCgroup | awk -F '=' '{print $2}' | sed 's/^\W//g')
-
-    if [ "$systemd_cgroup_driver"  == "true" ]; then
-        echo systemd
-        return
-    else
-        echo cgroupfs
-        return
-    fi
-}
-
-if [ "$(get_kubelet_cgroup_driver)" != "$(get_containerd_cgroup_driver)" ]; then
-    configure_kubelet "$(get_containerd_cgroup_driver)"
-else
-    cgroup_driver=$(get_kubelet_cgroup_driver)
-    echo "kubelet and containerd are configured with the same cgroup driver ($cgroup_driver) - nothing to do"
+# do not change the kubelet's configuration on an existing system with running containers
+if has_running_containerd_tasks; then
+    echo "Skip configuring the kubelet cgroup driver on a node with running containers"
+    return
 fi
+
+# all recent/supported Gardenlinux versions mount cgroupsV2 only.
+# This extension version is only compatible with cgroupsv2-only GL versions, hence
+# can only be used in Gardener installations that have no cgroupsV1 Gl versions configured.
+configure_kubelet_cgroup_driver
