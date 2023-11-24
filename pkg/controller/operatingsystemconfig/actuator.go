@@ -201,7 +201,7 @@ ExecStartPre=` + filePathKubeletCGroupDriverScript + `
 		FilePaths: []string{filePathFunctionsHelperScript, filePathKubeletCGroupDriverScript},
 	})
 
-	// add scripts and dropins for containerd if activated
+	// add scripts and dropins for containerd
 	filePathContainerdCGroupDriverScript := filepath.Join(gardenlinux.ScriptLocation, "containerd_cgroup_driver.sh")
 	extensionFiles = append(extensionFiles, extensionsv1alpha1.File{
 		Path:        filePathContainerdCGroupDriverScript,
