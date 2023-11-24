@@ -23,6 +23,8 @@ disableControllers: []
 
 gardener:
   version: ""
+  gardenlet:
+    featureGates: {}
 
 # settings for metrics, e.g. scraping by seed-prometheus
 metrics:
