@@ -62,6 +62,7 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, osc *extensio
 
 	case extensionsv1alpha1.OperatingSystemConfigPurposeReconcile:
 		extensionUnits, extensionFiles, err := a.handleReconcileOSC(osc)
+		// TODO(rfranzke): Change this to `return nil, nil, nil, nil, extensionUnits, extensionFiles, err` after UseGardenerNodeAgent feature gate has been removed.
 		return cloudConfig, command, oscommonactuator.OperatingSystemConfigUnitNames(osc), oscommonactuator.OperatingSystemConfigFilePaths(osc), extensionUnits, extensionFiles, err
 
 	default:
