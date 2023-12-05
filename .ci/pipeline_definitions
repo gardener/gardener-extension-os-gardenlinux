@@ -1,14 +1,11 @@
 gardener-extension-os-gardenlinux:
-  template: 'default'
   base_definition:
-    repo: ~
     traits:
       version:
         preprocess: 'inject-commit-hash'
       publish:
         dockerimages:
           gardener-extension-os-gardenlinux:
-            registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/extensions/os-gardenlinux'
             dockerfile: 'Dockerfile'
             target: gardener-extension-os-gardenlinux
