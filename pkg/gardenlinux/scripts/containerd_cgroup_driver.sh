@@ -20,7 +20,7 @@ function configure_containerd {
 # do not change the kubelet's configuration on an existing system with running containers
 if has_running_containerd_tasks; then
     echo "Skip configuring the containerd cgroup driver on a node with running containers"
-    return
+    exit 0
 fi
 
 # all recent/supported Gardenlinux versions mount cgroupsV2 only.
