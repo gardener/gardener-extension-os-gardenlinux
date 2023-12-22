@@ -300,7 +300,7 @@ function configure_containerd {
     sed -i "s/SystemdCgroup *= *false/SystemdCgroup = true/" "$CONTAINERD_CONFIG"
 }
 
-# do not change the kubelet's configuration on an existing system with running containers
+# do not change containerd's configuration on an existing system with running containers
 if has_running_containerd_tasks; then
     echo "Skip configuring the containerd cgroup driver on a node with running containers"
     exit 0
