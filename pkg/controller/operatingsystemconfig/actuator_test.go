@@ -221,52 +221,14 @@ ExecStartPre=/opt/gardener/bin/containerd_cgroup_driver.sh
 
 set -Eeuo pipefail
 
-function get_fs_of_directory {
-    [ -z "$1" ] || [ ! -d "$1" ] && return
-    echo -n "$(stat -c %T -f "$1")"
-}
-
-function check_current_cgroup {
-    # determining if the system is running cgroupv1 or cgroupv2
-    # using systemd approach as in
-    # https://github.com/systemd/systemd/blob/d6d450074ff7729d43476804e0e19c049c03141d/src/basic/cgroup-util.c#L2105-L2149
-
-    CGROUP_ID="cgroupfs"
-    CGROUP2_ID="cgroup2fs"
-    TMPFS_ID="tmpfs"
-
-    cgroup_dir_fs="$(get_fs_of_directory /sys/fs/cgroup)"
-
-    if [[ "$cgroup_dir_fs" == "$CGROUP2_ID" ]]; then
-        echo "v2"
-        return
-    elif [[ "$cgroup_dir_fs" == "$TMPFS_ID" ]]; then
-        if [[ "$(get_fs_of_directory /sys/fs/cgroup/unified)" == "$CGROUP2_ID" ]]; then
-            echo "v1 (cgroupv2systemd)"
-            return
-        fi
-        if [[ "$(get_fs_of_directory /sys/fs/cgroup/systemd)" == "$CGROUP2_ID" ]]; then
-            echo "v1 (cgroupv2systemd232)"
-            return
-        fi
-        if [[ "$(get_fs_of_directory /sys/fs/cgroup/systemd)" == "$CGROUP_ID" ]]; then
-            echo "v1"
-            return
-        fi
-    fi
-    # if we came this far despite all those returns, it means something went wrong
-    echo "failed to determine cgroup version for this system" >&2
-    exit 1
-}
-
-function check_running_containerd_tasks {
+function has_running_containerd_tasks {
     containerd_runtime_status_dir=/run/containerd/io.containerd.runtime.v2.task/k8s.io
 
     # if the status dir for k8s.io namespace does not exist, there are no containers
     # in said namespace
     if [ ! -d $containerd_runtime_status_dir ]; then
         echo "$containerd_runtime_status_dir does not exists - no tasks in k8s.io namespace" 
-        return 0
+        return 1
     fi
 
     # count the number of containerd tasks in the k8s.io namespace
@@ -274,11 +236,11 @@ function check_running_containerd_tasks {
 
     if [ "$num_tasks" -eq 0 ]; then
         echo "no active tasks in k8s.io namespace" 
-        return 0
+        return 1
     fi
 
-    echo "there are $num_tasks active tasks in the k8s.io containerd namespace - terminating"
-    return 1
+    echo "There are $num_tasks active tasks in the k8s.io containerd namespace"
+    return 0
 }
 `}},
 						},
@@ -293,50 +255,27 @@ source "$(dirname $0)/g_functions.sh"
 
 KUBELET_CONFIG="/var/lib/kubelet/config/kubelet"
 
-# reconfigure the kubelet to use systemd as a cgroup driver on cgroup v2 enabled systems
-function configure_kubelet {
-    desired_cgroup_driver=$1
-
+# reconfigure the kubelet to use systemd as a cgroup driver
+function configure_kubelet_cgroup_driver {
     if [ ! -s "$KUBELET_CONFIG" ]; then
         echo "$KUBELET_CONFIG does not exist" >&2
         return
     fi
 
-    if [[ "$desired_cgroup_driver" == "systemd" ]]; then
-        echo "Configuring kubelet to use systemd as cgroup driver"
-        sed -i "s/cgroupDriver: cgroupfs/cgroupDriver: systemd/" "$KUBELET_CONFIG"
-    else
-        echo "Configuring kubelet to use cgroupfs as cgroup driver"
-        sed -i "s/cgroupDriver: systemd/cgroupDriver: cgroupfs/" "$KUBELET_CONFIG"
-    fi
+    echo "Configuring kubelet cgroup driver to systemd"
+    sed -i "s/cgroupDriver: cgroupfs/cgroupDriver: systemd/" "$KUBELET_CONFIG"
 }
 
-# determine which cgroup driver the kubelet is currently configured with
-function get_kubelet_cgroup_driver {
-    kubelet_cgroup_driver=$(grep cgroupDriver "$KUBELET_CONFIG" | awk -F ':' '{print $2}' | sed 's/^\W//g')
-    echo "$kubelet_cgroup_driver"
-}
-
-# determine which cgroup driver containerd is using - this requires that the SystemdCgroup is in containerds
-# running config - if it has been removed from the configfile, this will fail
-function get_containerd_cgroup_driver {
-    systemd_cgroup_driver=$(containerd config dump | grep SystemdCgroup | awk -F '=' '{print $2}' | sed 's/^\W//g')
-
-    if [ "$systemd_cgroup_driver"  == "true" ]; then
-        echo systemd
-        return
-    else
-        echo cgroupfs
-        return
-    fi
-}
-
-if [ "$(get_kubelet_cgroup_driver)" != "$(get_containerd_cgroup_driver)" ]; then
-    configure_kubelet "$(get_containerd_cgroup_driver)"
-else
-    cgroup_driver=$(get_kubelet_cgroup_driver)
-    echo "kubelet and containerd are configured with the same cgroup driver ($cgroup_driver) - nothing to do"
+# do not change the kubelet's configuration on an existing system with running containers
+if has_running_containerd_tasks; then
+    echo "Skip configuring the kubelet cgroup driver on a node with running containers"
+    exit 0
 fi
+
+# all recent/supported Gardenlinux versions mount cgroupsV2 only.
+# This extension version is only compatible with cgroupsv2-only GL versions, hence
+# can only be used in Gardener installations that have no cgroupsV1 Gl versions configured.
+configure_kubelet_cgroup_driver
 `}},
 						},
 						extensionsv1alpha1.File{
@@ -348,9 +287,8 @@ set -Eeuo pipefail
 
 source "$(dirname $0)/g_functions.sh"
 
-# reconfigures containerd to use systemd as a cgroup driver on cgroup v2 enabled systems
+# reconfigures containerd to use systemd as a cgroup driver
 function configure_containerd {
-    desired_cgroup=$1
     CONTAINERD_CONFIG="/etc/containerd/config.toml"
 
     if [ ! -s "$CONTAINERD_CONFIG" ]; then
@@ -358,25 +296,20 @@ function configure_containerd {
         return
     fi
 
-    if [[ "$desired_cgroup" == "v2" ]]; then
-        echo "Configuring containerd cgroup driver to systemd"
-        sed -i "s/SystemdCgroup *= *false/SystemdCgroup = true/" "$CONTAINERD_CONFIG"
-    else
-        echo "Configuring containerd cgroup driver to cgroupfs"
-        sed -i "s/SystemdCgroup *= *true/SystemdCgroup = false/" "$CONTAINERD_CONFIG"
-    fi
+    echo "Setting containerd cgroup driver to systemd"
+    sed -i "s/SystemdCgroup *= *false/SystemdCgroup = true/" "$CONTAINERD_CONFIG"
 }
 
-if check_running_containerd_tasks; then
-    configure_containerd "$(check_current_cgroup)"
-
-    # in rare cases it could be that the kubelet.service was already running when
-    # containerd got reconfigured so we restart it to force its ExecStartPre
-    if systemctl is-active kubelet.service; then
-        echo "triggering kubelet restart..."
-        systemctl restart --no-block kubelet.service
-    fi
+# do not change containerd's configuration on an existing system with running containers
+if has_running_containerd_tasks; then
+    echo "Skip configuring the containerd cgroup driver on a node with running containers"
+    exit 0
 fi
+
+# all recent/supported Gardenlinux versions mount cgroupsV2 only.
+# This extension version is only compatible with cgroupsv2-only GL versions, hence
+# can only be used in Gardener installations that have no cgroupsV1 Gl versions configured.
+configure_containerd
 `}},
 						},
 					))
