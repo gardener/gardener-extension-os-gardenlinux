@@ -288,7 +288,7 @@ message CARotation {
 
 // CRI contains information about the Container Runtimes.
 message CRI {
-  // The name of the CRI library. Supported values are `docker` and `containerd`.
+  // The name of the CRI library. Supported values are `containerd`.
   optional string name = 1;
 
   // ContainerRuntimes is the list of the required container runtimes supported for a worker pool.
@@ -407,13 +407,21 @@ message ClusterAutoscaler {
   // +optional
   repeated string ignoreTaints = 10;
 
-  // NewPodScaleUpDelay specifies how long CA should ignore newly created pods before they have to be considered for scale-up.
+  // NewPodScaleUpDelay specifies how long CA should ignore newly created pods before they have to be considered for scale-up (default: 0s).
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Duration newPodScaleUpDelay = 11;
 
   // MaxEmptyBulkDelete specifies the maximum number of empty nodes that can be deleted at the same time (default: 10).
   // +optional
   optional int32 maxEmptyBulkDelete = 12;
+
+  // IgnoreDaemonsetsUtilization allows CA to ignore DaemonSet pods when calculating resource utilization for scaling down (default: false).
+  // +optional
+  optional bool ignoreDaemonsetsUtilization = 13;
+
+  // Verbosity allows CA to modify its log level (default: 2).
+  // +optional
+  optional int32 verbosity = 14;
 }
 
 // Condition holds the information about the state of a resource.
@@ -761,6 +769,16 @@ message ETCDEncryptionKeyRotation {
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastCompletionTriggeredTime = 5;
 }
 
+// EncryptionConfig contains customizable encryption configuration of the API server.
+message EncryptionConfig {
+  // Resources contains the list of resources that shall be encrypted in addition to secrets.
+  // Each item is a Kubernetes resource name in plural (resource or resource.group) that should be encrypted.
+  // Note that configuring a custom resource is only supported for versions >= 1.26.
+  // Wildcards are not supported for now.
+  // See https://github.com/gardener/gardener/blob/master/docs/usage/etcd_encryption_config.md for more details.
+  repeated string resources = 1;
+}
+
 // ExpirableVersion contains a version and an expiration date.
 message ExpirableVersion {
   // Version is the version identifier.
@@ -1093,6 +1111,10 @@ message KubeAPIServerConfig {
   // Defaults to 300.
   // +optional
   optional int64 defaultUnreachableTolerationSeconds = 15;
+
+  // EncryptionConfig contains customizable encryption configuration of the Kube API server.
+  // +optional
+  optional EncryptionConfig encryptionConfig = 16;
 }
 
 // KubeControllerManagerConfig contains configuration settings for the kube-controller-manager.
@@ -2385,14 +2407,6 @@ message SeedSpec {
   // Provider defines the provider type and region for this Seed cluster.
   optional SeedProvider provider = 4;
 
-  // SecretRef is a reference to a Secret object containing the Kubeconfig of the Kubernetes
-  // cluster to be registered as Seed.
-  //
-  // Deprecated: This field is deprecated, gardenlet must run in the Seed cluster,
-  // hence it should use the in-cluster rest config via ServiceAccount to communicate with the Seed cluster.
-  // +optional
-  optional k8s.io.api.core.v1.SecretReference secretRef = 5;
-
   // Taints describes taints on the seed.
   // +optional
   repeated SeedTaint taints = 6;
@@ -2874,6 +2888,12 @@ message ShootStatus {
   // LastMaintenance holds information about the last maintenance operations on the Shoot.
   // +optional
   optional LastMaintenance lastMaintenance = 17;
+
+  // EncryptedResources is the list of resources in the Shoot which are currently encrypted.
+  // Secrets are encrypted by default and are not part of the list.
+  // See https://github.com/gardener/gardener/blob/master/docs/usage/etcd_encryption_config.md for more details.
+  // +optional
+  repeated string encryptedResources = 18;
 }
 
 // ShootTemplate is a template for creating a Shoot object.
