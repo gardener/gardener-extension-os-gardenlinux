@@ -97,36 +97,56 @@ func Sequential(fns ...TaskFn) TaskFn {
 	}
 }
 
-// Parallel runs the given TaskFns in parallel, collecting their errors in a multierror.
-func Parallel(fns ...TaskFn) TaskFn {
+// ParallelN returns a function that runs the given TaskFns in parallel by spawning N workers,
+// collecting their errors in a multierror. If N <= 0, then N will be defaulted to len(fns).
+func ParallelN(n int, fns ...TaskFn) TaskFn {
+	workers := n
+	if n <= 0 {
+		workers = len(fns)
+	}
 	return func(ctx context.Context) error {
 		var (
 			wg     sync.WaitGroup
-			errors = make(chan error)
+			fnsCh  = make(chan TaskFn)
+			errCh  = make(chan error)
 			result error
 		)
 
-		for _, fn := range fns {
-			t := fn
+		for i := 0; i < workers; i++ {
 			wg.Add(1)
 			go func() {
-				defer wg.Done()
-				errors <- t(ctx)
+				for fn := range fnsCh {
+					fn := fn
+					errCh <- fn(ctx)
+				}
+				wg.Done()
 			}()
 		}
 
 		go func() {
-			defer close(errors)
+			for _, f := range fns {
+				fnsCh <- f
+			}
+			close(fnsCh)
+		}()
+
+		go func() {
+			defer close(errCh)
 			wg.Wait()
 		}()
 
-		for err := range errors {
+		for err := range errCh {
 			if err != nil {
 				result = multierror.Append(result, err)
 			}
 		}
 		return result
 	}
+}
+
+// Parallel runs the given TaskFns in parallel, collecting their errors in a multierror.
+func Parallel(fns ...TaskFn) TaskFn {
+	return ParallelN(len(fns), fns...)
 }
 
 // ParallelExitOnError runs the given TaskFns in parallel and stops execution as soon as one TaskFn returns an error.
