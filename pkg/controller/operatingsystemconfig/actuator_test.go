@@ -55,7 +55,7 @@ var _ = Describe("Actuator", func() {
 					Type: gardenlinux.OSTypeGardenLinux,
 				},
 				Purpose: extensionsv1alpha1.OperatingSystemConfigPurposeProvision,
-				Units:   []extensionsv1alpha1.Unit{{Name: "some-unit", Content: ptr.To[string]("foo")}},
+				Units:   []extensionsv1alpha1.Unit{{Name: "some-unit", Content: ptr.To("foo")}},
 				Files:   []extensionsv1alpha1.File{{Path: "/some/file", Content: extensionsv1alpha1.FileContent{Inline: &extensionsv1alpha1.FileContentInline{Data: "bar"}}}},
 			},
 		}

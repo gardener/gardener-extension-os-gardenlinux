@@ -93,8 +93,8 @@ dataKey: token`)
 	}
 
 	memoryOneOsConfig = &v1alpha1.OperatingSystemConfiguration{
-		MemoryTopology: ptr.To[string]("3"),
-		SystemMemory:   ptr.To[string]("7x"),
+		MemoryTopology: ptr.To("3"),
+		SystemMemory:   ptr.To("7x"),
 	}
 
 	gardenlinuxOsctemplate = commongen.OperatingSystemConfig{

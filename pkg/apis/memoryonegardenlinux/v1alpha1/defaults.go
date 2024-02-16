@@ -26,11 +26,11 @@ func addDefaultingFuncs(scheme *runtime.Scheme) error {
 // SetDefaults_OperatingSystemConfiguration sets the defaults for the Garden Linux operating system configuration
 func SetDefaults_OperatingSystemConfiguration(obj *OperatingSystemConfiguration) {
 	if isEmptyString(obj.MemoryTopology) {
-		obj.MemoryTopology = ptr.To[string]("2")
+		obj.MemoryTopology = ptr.To("2")
 	}
 
 	if isEmptyString(obj.SystemMemory) {
-		obj.SystemMemory = ptr.To[string]("6x")
+		obj.SystemMemory = ptr.To("6x")
 	}
 }
 
