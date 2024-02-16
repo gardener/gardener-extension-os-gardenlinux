@@ -57,7 +57,6 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, osc *extensio
 		if !a.useGardenerNodeAgent {
 			return cloudConfig, command, oscommonactuator.OperatingSystemConfigUnitNames(osc), oscommonactuator.OperatingSystemConfigFilePaths(osc), nil, nil, nil
 		}
-
 		userData, err := a.handleProvisionOSC(ctx, osc)
 		return []byte(userData), nil, nil, nil, nil, nil, err
 

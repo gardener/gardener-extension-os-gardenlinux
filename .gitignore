@@ -11,7 +11,6 @@ hack/tools/bin
 .vscode
 .idea
 .DS_Store
-.cache_ggshield
 *~
 
 TODO
