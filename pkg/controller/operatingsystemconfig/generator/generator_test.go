@@ -22,7 +22,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/apis/memoryonegardenlinux/v1alpha1"
 	gardenlinux_generator "github.com/gardener/gardener-extension-os-gardenlinux/pkg/controller/operatingsystemconfig/generator"
@@ -93,8 +93,8 @@ dataKey: token`)
 	}
 
 	memoryOneOsConfig = &v1alpha1.OperatingSystemConfiguration{
-		MemoryTopology: pointer.String("3"),
-		SystemMemory:   pointer.String("7x"),
+		MemoryTopology: ptr.To("3"),
+		SystemMemory:   ptr.To("7x"),
 	}
 
 	gardenlinuxOsctemplate = commongen.OperatingSystemConfig{

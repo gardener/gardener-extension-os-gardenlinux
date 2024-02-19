@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -55,7 +55,7 @@ var _ = Describe("Actuator", func() {
 					Type: gardenlinux.OSTypeGardenLinux,
 				},
 				Purpose: extensionsv1alpha1.OperatingSystemConfigPurposeProvision,
-				Units:   []extensionsv1alpha1.Unit{{Name: "some-unit", Content: pointer.String("foo")}},
+				Units:   []extensionsv1alpha1.Unit{{Name: "some-unit", Content: ptr.To("foo")}},
 				Files:   []extensionsv1alpha1.File{{Path: "/some/file", Content: extensionsv1alpha1.FileContent{Inline: &extensionsv1alpha1.FileContentInline{Data: "bar"}}}},
 			},
 		}
@@ -217,7 +217,7 @@ ExecStartPre=/opt/gardener/bin/containerd_cgroup_driver.sh
 					Expect(extensionFiles).To(ConsistOf(
 						extensionsv1alpha1.File{
 							Path:        "/opt/gardener/bin/g_functions.sh",
-							Permissions: pointer.Int32(0755),
+							Permissions: ptr.To[int32](0755),
 							Content: extensionsv1alpha1.FileContent{Inline: &extensionsv1alpha1.FileContentInline{Data: `#!/bin/bash
 
 set -Eeuo pipefail
@@ -285,7 +285,7 @@ function check_running_containerd_tasks {
 						},
 						extensionsv1alpha1.File{
 							Path:        "/opt/gardener/bin/kubelet_cgroup_driver.sh",
-							Permissions: pointer.Int32(0755),
+							Permissions: ptr.To[int32](0755),
 							Content: extensionsv1alpha1.FileContent{Inline: &extensionsv1alpha1.FileContentInline{Data: `#!/bin/bash
 
 set -Eeuo pipefail
@@ -342,7 +342,7 @@ fi
 						},
 						extensionsv1alpha1.File{
 							Path:        "/opt/gardener/bin/containerd_cgroup_driver.sh",
-							Permissions: pointer.Int32(0755),
+							Permissions: ptr.To[int32](0755),
 							Content: extensionsv1alpha1.FileContent{Inline: &extensionsv1alpha1.FileContentInline{Data: `#!/bin/bash
 
 set -Eeuo pipefail

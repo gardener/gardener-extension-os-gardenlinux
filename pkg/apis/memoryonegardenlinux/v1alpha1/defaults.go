@@ -16,7 +16,7 @@ package v1alpha1
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 func addDefaultingFuncs(scheme *runtime.Scheme) error {
@@ -26,11 +26,11 @@ func addDefaultingFuncs(scheme *runtime.Scheme) error {
 // SetDefaults_OperatingSystemConfiguration sets the defaults for the Garden Linux operating system configuration
 func SetDefaults_OperatingSystemConfiguration(obj *OperatingSystemConfiguration) {
 	if isEmptyString(obj.MemoryTopology) {
-		obj.MemoryTopology = pointer.String("2")
+		obj.MemoryTopology = ptr.To("2")
 	}
 
 	if isEmptyString(obj.SystemMemory) {
-		obj.SystemMemory = pointer.String("6x")
+		obj.SystemMemory = ptr.To("6x")
 	}
 }
 
