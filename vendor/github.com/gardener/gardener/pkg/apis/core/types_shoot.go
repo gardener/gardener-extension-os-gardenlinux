@@ -355,10 +355,10 @@ type DNS struct {
 
 // DNSProvider contains information about a DNS provider.
 type DNSProvider struct {
-	// TODO(timuthy): Remove this field with release v1.87.
+	// TODO(timuthy): Remove this field in the scope of https://github.com/gardener/gardener/issues/9176.
 
 	// Domains contains information about which domains shall be included/excluded for this provider.
-	// Deprecated: This field is deprecated and will be removed in Gardener release v1.87.
+	// Deprecated: This field is deprecated and will be removed in a future release.
 	Domains *DNSIncludeExclude
 	// Primary indicates that this DNSProvider is used for shoot related domains.
 	Primary *bool
@@ -370,10 +370,10 @@ type DNSProvider struct {
 	// Type is the DNS provider type for the Shoot. Only relevant if not the default domain is used for
 	// this shoot.
 	Type *string
-	// TODO(timuthy): Remove this field with release v1.87.
+	// TODO(timuthy): Remove this field in the scope of https://github.com/gardener/gardener/issues/9176.
 
 	// Zones contains information about which hosted zones shall be included/excluded for this provider.
-	// Deprecated: This field is deprecated and will be removed in Gardener release v1.87.
+	// Deprecated: This field is deprecated and will be removed in a future release.
 	Zones *DNSIncludeExclude
 }
 
@@ -863,14 +863,6 @@ type KubeletConfig struct {
 	MaxPods *int32
 	// PodPIDsLimit is the maximum number of process IDs per pod allowed by the kubelet.
 	PodPIDsLimit *int64
-	// TODO(shafeeqes): Remove this field in gardener v1.89
-
-	// ImagePullProgressDeadline describes the time limit under which if no pulling progress is made, the image pulling will be cancelled.
-	// Default: 1m
-	// Only relevant for docker CRI.
-	//
-	// Deprecated: This field is deprecated and will be removed in Gardener release v1.89.
-	ImagePullProgressDeadline *metav1.Duration
 	// FailSwapOn makes the Kubelet fail to start if swap is enabled on the node. (default true).
 	FailSwapOn *bool
 	// KubeReserved is the configuration for resources reserved for kubernetes node components (mainly kubelet and container runtime).

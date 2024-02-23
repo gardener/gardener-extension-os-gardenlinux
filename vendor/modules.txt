@@ -20,10 +20,6 @@ github.com/beorn7/perks/quantile
 # github.com/blang/semver/v4 v4.0.0
 ## explicit; go 1.14
 github.com/blang/semver/v4
-# github.com/bronze1man/yaml2json v0.0.0-20211227013850-8972abeaea25
-## explicit
-github.com/bronze1man/yaml2json
-github.com/bronze1man/yaml2json/y2jLib
 # github.com/cespare/xxhash/v2 v2.2.0
 ## explicit; go 1.11
 github.com/cespare/xxhash/v2
@@ -63,8 +59,8 @@ github.com/fsnotify/fsnotify
 # github.com/gardener/etcd-druid v0.22.0
 ## explicit; go 1.21
 github.com/gardener/etcd-druid/api/v1alpha1
-# github.com/gardener/gardener v1.88.0
-## explicit; go 1.21
+# github.com/gardener/gardener v1.89.0
+## explicit; go 1.22.0
 github.com/gardener/gardener/.github
 github.com/gardener/gardener/.github/ISSUE_TEMPLATE
 github.com/gardener/gardener/extensions/pkg/apis/config
