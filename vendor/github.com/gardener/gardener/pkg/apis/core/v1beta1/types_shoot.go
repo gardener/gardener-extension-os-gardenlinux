@@ -437,10 +437,10 @@ type DNS struct {
 
 // DNSProvider contains information about a DNS provider.
 type DNSProvider struct {
-	// TODO(timuthy): Remove this field with release v1.87.
+	// TODO(timuthy): Remove this field in the scope of https://github.com/gardener/gardener/issues/9176.
 
 	// Domains contains information about which domains shall be included/excluded for this provider.
-	// Deprecated: This field is deprecated and will be removed in Gardener release v1.87.
+	// Deprecated: This field is deprecated and will be removed in a future release.
 	// +optional
 	Domains *DNSIncludeExclude `json:"domains,omitempty" protobuf:"bytes,1,opt,name=domains"`
 	// Primary indicates that this DNSProvider is used for shoot related domains.
@@ -455,10 +455,10 @@ type DNSProvider struct {
 	// Type is the DNS provider type.
 	// +optional
 	Type *string `json:"type,omitempty" protobuf:"bytes,4,opt,name=type"`
-	// TODO(timuthy): Remove this field with release v1.87.
+	// TODO(timuthy): Remove this field in the scope of https://github.com/gardener/gardener/issues/9176.
 
 	// Zones contains information about which hosted zones shall be included/excluded for this provider.
-	// Deprecated: This field is deprecated and will be removed in Gardener release v1.87.
+	// Deprecated: This field is deprecated and will be removed in a future release.
 	// +optional
 	Zones *DNSIncludeExclude `json:"zones,omitempty" protobuf:"bytes,5,opt,name=zones"`
 }
@@ -1098,15 +1098,10 @@ type KubeletConfig struct {
 	// PodPIDsLimit is the maximum number of process IDs per pod allowed by the kubelet.
 	// +optional
 	PodPIDsLimit *int64 `json:"podPidsLimit,omitempty" protobuf:"varint,11,opt,name=podPidsLimit"`
-	// TODO(shafeeqes): Remove this field in gardener v1.89
 
-	// ImagePullProgressDeadline describes the time limit under which if no pulling progress is made, the image pulling will be cancelled.
-	// +optional
-	// Default: 1m
-	// Only relevant for docker CRI.
-	//
-	// Deprecated: This field is deprecated and will be removed in Gardener release v1.89.
-	ImagePullProgressDeadline *metav1.Duration `json:"imagePullProgressDeadline,omitempty" protobuf:"bytes,12,opt,name=imagePullProgressDeadline"`
+	// ImagePullProgressDeadline is tombstoned to show why 12 is reserved protobuf tag.
+	// ImagePullProgressDeadline *metav1.Duration `json:"imagePullProgressDeadline,omitempty" protobuf:"bytes,12,opt,name=imagePullProgressDeadline"`
+
 	// FailSwapOn makes the Kubelet fail to start if swap is enabled on the node. (default true).
 	// +optional
 	FailSwapOn *bool `json:"failSwapOn,omitempty" protobuf:"varint,13,opt,name=failSwapOn"`
