@@ -1134,7 +1134,7 @@ func AnonymousAuthenticationEnabled(kubeAPIServerConfig *gardencorev1beta1.KubeA
 
 // CalculateSeedUsage returns a map representing the number of shoots per seed from the given list of shoots.
 // It takes both spec.seedName and status.seedName into account.
-func CalculateSeedUsage(shootList []gardencorev1beta1.Shoot) map[string]int {
+func CalculateSeedUsage(shootList []*gardencorev1beta1.Shoot) map[string]int {
 	m := map[string]int{}
 
 	for _, shoot := range shootList {
@@ -1426,25 +1426,13 @@ func MutateShootETCDEncryptionKeyRotation(shoot *gardencorev1beta1.Shoot, f func
 	f(shoot.Status.Credentials.Rotation.ETCDEncryptionKey)
 }
 
-// IsPSPDisabled returns true if the PodSecurityPolicy plugin is explicitly disabled in the ShootSpec or the cluster version is >= 1.25.
-func IsPSPDisabled(shoot *gardencorev1beta1.Shoot) bool {
-	// we have disabled the policy/v1beta1/podsecuritypolicies API for workerless Shoots
-	if IsWorkerless(shoot) {
-		return true
+// GetAllZonesFromShoot returns the set of all availability zones defined in the worker pools of the Shoot specification.
+func GetAllZonesFromShoot(shoot *gardencorev1beta1.Shoot) sets.Set[string] {
+	out := sets.New[string]()
+	for _, worker := range shoot.Spec.Provider.Workers {
+		out.Insert(worker.Zones...)
 	}
-
-	if versionutils.ConstraintK8sGreaterEqual125.Check(semver.MustParse(shoot.Spec.Kubernetes.Version)) {
-		return true
-	}
-
-	if shoot.Spec.Kubernetes.KubeAPIServer != nil {
-		for _, plugin := range shoot.Spec.Kubernetes.KubeAPIServer.AdmissionPlugins {
-			if plugin.Name == "PodSecurityPolicy" && ptr.Deref(plugin.Disabled, false) {
-				return true
-			}
-		}
-	}
-	return false
+	return out
 }
 
 // IsFailureToleranceTypeZone returns true if failureToleranceType is zone else returns false.
@@ -1495,4 +1483,55 @@ func IsTopologyAwareRoutingForShootControlPlaneEnabled(seed *gardencorev1beta1.S
 // ShootHasOperationType returns true when the 'type' in the last operation matches the provided type.
 func ShootHasOperationType(lastOperation *gardencorev1beta1.LastOperation, lastOperationType gardencorev1beta1.LastOperationType) bool {
 	return lastOperation != nil && lastOperation.Type == lastOperationType
+}
+
+// KubeAPIServerFeatureGateDisabled returns whether the given feature gate is explicitly disabled for the kube-apiserver for the given Shoot spec.
+func KubeAPIServerFeatureGateDisabled(shoot *gardencorev1beta1.Shoot, featureGate string) bool {
+	kubeAPIServer := shoot.Spec.Kubernetes.KubeAPIServer
+	if kubeAPIServer == nil || kubeAPIServer.FeatureGates == nil {
+		return false
+	}
+
+	value, ok := kubeAPIServer.FeatureGates[featureGate]
+	if !ok {
+		return false
+	}
+	return !value
+}
+
+// KubeControllerManagerFeatureGateDisabled returns whether the given feature gate is explicitly disabled for the kube-controller-manager for the given Shoot spec.
+func KubeControllerManagerFeatureGateDisabled(shoot *gardencorev1beta1.Shoot, featureGate string) bool {
+	kubeControllerManager := shoot.Spec.Kubernetes.KubeControllerManager
+	if kubeControllerManager == nil || kubeControllerManager.FeatureGates == nil {
+		return false
+	}
+
+	value, ok := kubeControllerManager.FeatureGates[featureGate]
+	if !ok {
+		return false
+	}
+	return !value
+}
+
+// KubeProxyFeatureGateDisabled returns whether the given feature gate is disabled for the kube-proxy for the given Shoot spec.
+func KubeProxyFeatureGateDisabled(shoot *gardencorev1beta1.Shoot, featureGate string) bool {
+	kubeProxy := shoot.Spec.Kubernetes.KubeProxy
+	if kubeProxy == nil || kubeProxy.FeatureGates == nil {
+		return false
+	}
+
+	value, ok := kubeProxy.FeatureGates[featureGate]
+	if !ok {
+		return false
+	}
+	return !value
+}
+
+// ConvertShootList converts a list of Shoots to a list of pointers to Shoots.
+func ConvertShootList(list []gardencorev1beta1.Shoot) []*gardencorev1beta1.Shoot {
+	var result []*gardencorev1beta1.Shoot
+	for i := range list {
+		result = append(result, &list[i])
+	}
+	return result
 }

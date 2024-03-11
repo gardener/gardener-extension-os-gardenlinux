@@ -31,3 +31,4 @@ testbin/
 # Goreleaser
 dist/
 
+dev/
