@@ -1,5 +1,5 @@
 # [Gardener Extension for Garden Linux OS](https://gardener.cloud)
-
+[![REUSE status](https://api.reuse.software/badge/github.com/gardener/gardener-extension-os-gardenlinux)](https://api.reuse.software/info/github.com/gardener/gardener-extension-os-gardenlinux)
 [![CI Build status](https://concourse.ci.gardener.cloud/api/v1/teams/gardener/pipelines/gardener-extension-os-gardenlinux-master/jobs/master-head-update-job/badge)](https://concourse.ci.gardener.cloud/teams/gardener/pipelines/gardener-extension-os-gardenlinux-master/jobs/master-head-update-job)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gardener/gardener-extension-os-gardenlinux)](https://goreportcard.com/report/github.com/gardener/gardener-extension-os-gardenlinux)
 
