@@ -296,6 +296,8 @@ const (
 	GardenRoleControlPlaneWildcardCert = "controlplane-cert"
 	// GardenRoleExposureClassHandler is the value of the GardenRole key indicating type 'exposureclass-handler'.
 	GardenRoleExposureClassHandler = "exposureclass-handler"
+	// GardenRoleShootServiceAccountIssuer is the value of the GardenRole key indicating type 'shoot-service-account-issuer'.
+	GardenRoleShootServiceAccountIssuer = "shoot-service-account-issuer"
 
 	// ShootUID is an annotation key for the shoot namespace in the seed cluster,
 	// which value will be the value of `shoot.status.uid`
@@ -523,6 +525,9 @@ const (
 	// cluster which can be used to describe that this ClusterRole contains custom permissions for extensions.
 	LabelAuthorizationCustomExtensionsPermissions = "authorization.gardener.cloud/custom-extensions-permissions"
 
+	// LabelObservabilityApplication is a constant for a label key set to all observability applications in gardener exposing a public endpoint.
+	LabelObservabilityApplication = "observability.gardener.cloud/app"
+
 	// LabelApp is a constant for a label key.
 	LabelApp = "app"
 	// LabelRole is a constant for a label key.
@@ -541,6 +546,16 @@ const (
 	LabelProxy = "proxy"
 	// LabelExtensionProjectRole is a constant for a label value for extension project roles
 	LabelExtensionProjectRole = "extension-project-role"
+
+	// LabelShootNamespace is a constant for a label key that indicates a relationship to a shoot in the specified namespace.
+	LabelShootNamespace = "shoot.gardener.cloud/namespace"
+	// LabelShootName is a constant for a label key that indicates a relationship to a shoot with the specified name.
+	LabelShootName = "shoot.gardener.cloud/name"
+
+	// LabelPublicKeys is a constant for a label key that indicates that a resource contains public keys.
+	LabelPublicKeys = "authentication.gardener.cloud/public-keys"
+	// LabelPublicKeysServiceAccount is a constant for a label value that indicates that a resource contains service account public keys.
+	LabelPublicKeysServiceAccount = "serviceaccount"
 
 	// LabelExposureClassHandlerName is the label key for exposure class handler names.
 	LabelExposureClassHandlerName = "handler.exposureclass.gardener.cloud/name"
@@ -625,6 +640,13 @@ const (
 	// AnnotationCoreDNSRewritingDisabled disables core dns query rewriting even if the corresponding feature gate is enabled.
 	AnnotationCoreDNSRewritingDisabled = "alpha.featuregates.shoot.gardener.cloud/core-dns-rewriting-disabled"
 
+	// AnnotationAuthenticationIssuer is the key for an annotation applied to a Shoot which specifies
+	// if the shoot's issuer is managed by Gardener.
+	AnnotationAuthenticationIssuer = "authentication.gardener.cloud/issuer"
+	// AnnotationAuthenticationIssuerManaged is the value for [AnnotationAuthenticationIssuer] annotation that indicates that
+	// a shoot's issuer should be managed by Gardener.
+	AnnotationAuthenticationIssuerManaged = "managed"
+
 	// AnnotationPodSecurityEnforce is a constant for an annotation on `ControllerRegistration`s and `ControllerInstallation`s. When set the
 	// `extension` namespace is created with "pod-security.kubernetes.io/enforce" label set to AnnotationPodSecurityEnforce's value.
 	AnnotationPodSecurityEnforce = "security.gardener.cloud/pod-security-enforce"
@@ -660,6 +682,12 @@ const (
 	LabelControllerRegistrationName = "controllerregistration.core.gardener.cloud/name"
 	// LabelPodMaintenanceRestart is a constant for a label that describes that a pod should be restarted during maintenance.
 	LabelPodMaintenanceRestart = "maintenance.gardener.cloud/restart"
+	// LabelCareConditionType is a key for a label on a ManagedResource indicating to which condition type its status
+	// should be aggregated.
+	LabelCareConditionType = "care.gardener.cloud/condition-type"
+	// ObservabilityComponentsHealthy is a constant for a condition type indicating the health of observability components.
+	ObservabilityComponentsHealthy = "ObservabilityComponentsHealthy"
+
 	// LabelWorkerPool is a constant for a label that indicates the worker pool the node belongs to
 	LabelWorkerPool = "worker.gardener.cloud/pool"
 	// LabelWorkerKubernetesVersion is a constant for a label that indicates the Kubernetes version used for the worker pool nodes.
@@ -756,6 +784,16 @@ const (
 	IngressTLSCertificateValidity = 730 * 24 * time.Hour // ~2 years, see https://support.apple.com/en-us/HT210176
 	// VPNTunnel dictates that VPN is used as a tunnel between seed and shoot networks.
 	VPNTunnel string = "vpn-shoot"
+
+	// AdvertisedAddressExternal is a constant that represents the name of the external kube-apiserver address.
+	AdvertisedAddressExternal = "external"
+	// AdvertisedAddressInternal is a constant that represents the name of the internal kube-apiserver address.
+	AdvertisedAddressInternal = "internal"
+	// AdvertisedAddressUnmanaged is a constant that represents the name of the unmanaged kube-apiserver address.
+	AdvertisedAddressUnmanaged = "unmanaged"
+	// AdvertisedAddressServiceAccountIssuer is a constant that represents the name of the address
+	// that is used as a service account issuer for the kube-apiserver.
+	AdvertisedAddressServiceAccountIssuer = "service-account-issuer"
 )
 
 var (

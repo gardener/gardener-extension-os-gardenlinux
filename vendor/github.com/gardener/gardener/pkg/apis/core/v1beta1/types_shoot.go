@@ -24,6 +24,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 )
 
 // +genclient
@@ -185,7 +187,8 @@ type ShootStatus struct {
 	// ClusterIdentity is the identity of the Shoot cluster. This field is immutable.
 	// +optional
 	ClusterIdentity *string `json:"clusterIdentity,omitempty" protobuf:"bytes,12,opt,name=clusterIdentity"`
-	// List of addresses on which the Kube API server can be reached.
+	// List of addresses that are relevant to the shoot.
+	// These include the Kube API server address and also the service account issuer.
 	// +optional
 	// +patchMergeKey=name
 	// +patchStrategy=merge
@@ -524,12 +527,9 @@ type HibernationSchedule struct {
 
 // Kubernetes contains the version and configuration variables for the Shoot control plane.
 type Kubernetes struct {
-	// AllowPrivilegedContainers indicates whether privileged containers are allowed in the Shoot.
-	// Defaults to true for Kubernetes versions below v1.25. Unusable for Kubernetes versions v1.25 and higher.
-	// +optional
-	//
-	// Deprecated: This field is deprecated and will be removed in a future version.
-	AllowPrivilegedContainers *bool `json:"allowPrivilegedContainers,omitempty" protobuf:"varint,1,opt,name=allowPrivilegedContainers"`
+	// AllowPrivilegedContainers is tombstoned to show why 1 is reserved protobuf tag.
+	// AllowPrivilegedContainers *bool `json:"allowPrivilegedContainers,omitempty" protobuf:"varint,1,opt,name=allowPrivilegedContainers"`
+
 	// ClusterAutoscaler contains the configuration flags for the Kubernetes cluster autoscaler.
 	// +optional
 	ClusterAutoscaler *ClusterAutoscaler `json:"clusterAutoscaler,omitempty" protobuf:"bytes,2,opt,name=clusterAutoscaler"`
@@ -1701,7 +1701,7 @@ const (
 	// ShootControlPlaneHealthy is a constant for a condition type indicating the health of core control plane components.
 	ShootControlPlaneHealthy ConditionType = "ControlPlaneHealthy"
 	// ShootObservabilityComponentsHealthy is a constant for a condition type indicating the health of observability components.
-	ShootObservabilityComponentsHealthy ConditionType = "ObservabilityComponentsHealthy"
+	ShootObservabilityComponentsHealthy ConditionType = v1beta1constants.ObservabilityComponentsHealthy
 	// ShootEveryNodeReady is a constant for a condition type indicating the node health.
 	ShootEveryNodeReady ConditionType = "EveryNodeReady"
 	// ShootSystemComponentsHealthy is a constant for a condition type indicating the system components health.
