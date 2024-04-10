@@ -38,6 +38,7 @@ var _ = Describe("Actuator", func() {
 	BeforeEach(func() {
 		fakeClient = fakeclient.NewClientBuilder().Build()
 		mgr = test.FakeManager{Client: fakeClient}
+		actuator = NewActuator(mgr)
 
 		osc = &extensionsv1alpha1.OperatingSystemConfig{
 			Spec: extensionsv1alpha1.OperatingSystemConfigSpec{
@@ -51,33 +52,8 @@ var _ = Describe("Actuator", func() {
 		}
 	})
 
-	When("UseGardenerNodeAgent is false", func() {
-		BeforeEach(func() {
-			actuator = NewActuator(mgr, false)
-		})
-
-		Describe("#Reconcile", func() {
-			It("should not return an error", func() {
-				userData, command, unitNames, fileNames, extensionUnits, extensionFiles, err := actuator.Reconcile(ctx, log, osc)
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(userData).NotTo(BeEmpty()) // legacy logic is tested in ./generator/generator_test.go
-				Expect(command).To(BeNil())
-				Expect(unitNames).To(ConsistOf("some-unit"))
-				Expect(fileNames).To(ConsistOf("/some/file"))
-				Expect(extensionUnits).To(BeEmpty())
-				Expect(extensionFiles).To(BeEmpty())
-			})
-		})
-	})
-
-	When("UseGardenerNodeAgent is true", func() {
-		BeforeEach(func() {
-			actuator = NewActuator(mgr, true)
-		})
-
-		When("purpose is 'provision'", func() {
-			expectedUserData := `#!/bin/bash
+	When("purpose is 'provision'", func() {
+		expectedUserData := `#!/bin/bash
 if [ ! -s /etc/containerd/config.toml ]; then
   mkdir -p /etc/containerd/
   containerd config default > /etc/containerd/config.toml
@@ -112,37 +88,34 @@ systemctl enable docker && systemctl restart docker
 systemctl enable 'some-unit' && systemctl restart --no-block 'some-unit'
 `
 
-			When("OS type is 'gardenlinux'", func() {
-				Describe("#Reconcile", func() {
-					It("should not return an error", func() {
-						userData, command, unitNames, fileNames, extensionUnits, extensionFiles, err := actuator.Reconcile(ctx, log, osc)
-						Expect(err).NotTo(HaveOccurred())
+		When("OS type is 'gardenlinux'", func() {
+			Describe("#Reconcile", func() {
+				It("should not return an error", func() {
+					userData, extensionUnits, extensionFiles, err := actuator.Reconcile(ctx, log, osc)
+					Expect(err).NotTo(HaveOccurred())
 
-						Expect(string(userData)).To(Equal(expectedUserData))
-						Expect(command).To(BeNil())
-						Expect(unitNames).To(BeEmpty())
-						Expect(fileNames).To(BeEmpty())
-						Expect(extensionUnits).To(BeEmpty())
-						Expect(extensionFiles).To(BeEmpty())
-					})
+					Expect(string(userData)).To(Equal(expectedUserData))
+					Expect(extensionUnits).To(BeEmpty())
+					Expect(extensionFiles).To(BeEmpty())
 				})
 			})
+		})
 
-			When("OS type is 'memoryone-gardenlinux'", func() {
-				BeforeEach(func() {
-					osc.Spec.Type = memoryone.OSTypeMemoryOneGardenLinux
-					osc.Spec.ProviderConfig = &runtime.RawExtension{Raw: []byte(`apiVersion: memoryone-gardenlinux.os.extensions.gardener.cloud/v1alpha1
+		When("OS type is 'memoryone-gardenlinux'", func() {
+			BeforeEach(func() {
+				osc.Spec.Type = memoryone.OSTypeMemoryOneGardenLinux
+				osc.Spec.ProviderConfig = &runtime.RawExtension{Raw: []byte(`apiVersion: memoryone-gardenlinux.os.extensions.gardener.cloud/v1alpha1
 kind: OperatingSystemConfiguration
 memoryTopology: "2"
 systemMemory: "6x"`)}
-				})
+			})
 
-				Describe("#Reconcile", func() {
-					It("should not return an error", func() {
-						userData, command, unitNames, fileNames, extensionUnits, extensionFiles, err := actuator.Reconcile(ctx, log, osc)
-						Expect(err).NotTo(HaveOccurred())
+			Describe("#Reconcile", func() {
+				It("should not return an error", func() {
+					userData, extensionUnits, extensionFiles, err := actuator.Reconcile(ctx, log, osc)
+					Expect(err).NotTo(HaveOccurred())
 
-						Expect(string(userData)).To(Equal(`Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+					Expect(string(userData)).To(Equal(`Content-Type: multipart/mixed; boundary="==BOUNDARY=="
 MIME-Version: 1.0
 --==BOUNDARY==
 Content-Type: text/x-vsmp; section=vsmp
@@ -152,63 +125,57 @@ mem_topology=2
 Content-Type: text/x-shellscript
 ` + expectedUserData + `
 --==BOUNDARY==`))
-						Expect(command).To(BeNil())
-						Expect(unitNames).To(BeEmpty())
-						Expect(fileNames).To(BeEmpty())
-						Expect(extensionUnits).To(BeEmpty())
-						Expect(extensionFiles).To(BeEmpty())
-					})
+					Expect(extensionUnits).To(BeEmpty())
+					Expect(extensionFiles).To(BeEmpty())
 				})
 			})
 		})
+	})
 
-		When("purpose is 'reconcile'", func() {
-			BeforeEach(func() {
-				osc.Spec.Purpose = extensionsv1alpha1.OperatingSystemConfigPurposeReconcile
-			})
+	When("purpose is 'reconcile'", func() {
+		BeforeEach(func() {
+			osc.Spec.Purpose = extensionsv1alpha1.OperatingSystemConfigPurposeReconcile
+		})
 
-			Describe("#Reconcile", func() {
-				It("should not return an error", func() {
-					userData, command, unitNames, fileNames, extensionUnits, extensionFiles, err := actuator.Reconcile(ctx, log, osc)
-					Expect(err).NotTo(HaveOccurred())
+		Describe("#Reconcile", func() {
+			It("should not return an error", func() {
+				userData, extensionUnits, extensionFiles, err := actuator.Reconcile(ctx, log, osc)
+				Expect(err).NotTo(HaveOccurred())
 
-					Expect(userData).NotTo(BeEmpty()) // legacy logic is tested in ./generator/generator_test.go
-					Expect(command).To(BeNil())
-					Expect(unitNames).To(ConsistOf("some-unit"))
-					Expect(fileNames).To(ConsistOf("/some/file"))
-					Expect(extensionUnits).To(ConsistOf(
-						extensionsv1alpha1.Unit{
-							Name: "kubelet.service",
-							DropIns: []extensionsv1alpha1.DropIn{{
-								Name: "10-configure-cgroup-driver.conf",
-								Content: `[Service]
+				Expect(userData).To(BeEmpty())
+				Expect(extensionUnits).To(ConsistOf(
+					extensionsv1alpha1.Unit{
+						Name: "kubelet.service",
+						DropIns: []extensionsv1alpha1.DropIn{{
+							Name: "10-configure-cgroup-driver.conf",
+							Content: `[Service]
 ExecStartPre=/opt/gardener/bin/kubelet_cgroup_driver.sh
 `,
-							}},
-							FilePaths: []string{
-								"/opt/gardener/bin/g_functions.sh",
-								"/opt/gardener/bin/kubelet_cgroup_driver.sh",
-							},
+						}},
+						FilePaths: []string{
+							"/opt/gardener/bin/g_functions.sh",
+							"/opt/gardener/bin/kubelet_cgroup_driver.sh",
 						},
-						extensionsv1alpha1.Unit{
-							Name: "containerd.service",
-							DropIns: []extensionsv1alpha1.DropIn{{
-								Name: "10-configure-cgroup-driver.conf",
-								Content: `[Service]
+					},
+					extensionsv1alpha1.Unit{
+						Name: "containerd.service",
+						DropIns: []extensionsv1alpha1.DropIn{{
+							Name: "10-configure-cgroup-driver.conf",
+							Content: `[Service]
 ExecStartPre=/opt/gardener/bin/containerd_cgroup_driver.sh
 `,
-							}},
-							FilePaths: []string{
-								"/opt/gardener/bin/g_functions.sh",
-								"/opt/gardener/bin/containerd_cgroup_driver.sh",
-							},
+						}},
+						FilePaths: []string{
+							"/opt/gardener/bin/g_functions.sh",
+							"/opt/gardener/bin/containerd_cgroup_driver.sh",
 						},
-					))
-					Expect(extensionFiles).To(ConsistOf(
-						extensionsv1alpha1.File{
-							Path:        "/opt/gardener/bin/g_functions.sh",
-							Permissions: ptr.To[int32](0755),
-							Content: extensionsv1alpha1.FileContent{Inline: &extensionsv1alpha1.FileContentInline{Data: `#!/bin/bash
+					},
+				))
+				Expect(extensionFiles).To(ConsistOf(
+					extensionsv1alpha1.File{
+						Path:        "/opt/gardener/bin/g_functions.sh",
+						Permissions: ptr.To[int32](0755),
+						Content: extensionsv1alpha1.FileContent{Inline: &extensionsv1alpha1.FileContentInline{Data: `#!/bin/bash
 
 set -Eeuo pipefail
 
@@ -272,11 +239,11 @@ function check_running_containerd_tasks {
     return 1
 }
 `}},
-						},
-						extensionsv1alpha1.File{
-							Path:        "/opt/gardener/bin/kubelet_cgroup_driver.sh",
-							Permissions: ptr.To[int32](0755),
-							Content: extensionsv1alpha1.FileContent{Inline: &extensionsv1alpha1.FileContentInline{Data: `#!/bin/bash
+					},
+					extensionsv1alpha1.File{
+						Path:        "/opt/gardener/bin/kubelet_cgroup_driver.sh",
+						Permissions: ptr.To[int32](0755),
+						Content: extensionsv1alpha1.FileContent{Inline: &extensionsv1alpha1.FileContentInline{Data: `#!/bin/bash
 
 set -Eeuo pipefail
 
@@ -329,11 +296,11 @@ else
     echo "kubelet and containerd are configured with the same cgroup driver ($cgroup_driver) - nothing to do"
 fi
 `}},
-						},
-						extensionsv1alpha1.File{
-							Path:        "/opt/gardener/bin/containerd_cgroup_driver.sh",
-							Permissions: ptr.To[int32](0755),
-							Content: extensionsv1alpha1.FileContent{Inline: &extensionsv1alpha1.FileContentInline{Data: `#!/bin/bash
+					},
+					extensionsv1alpha1.File{
+						Path:        "/opt/gardener/bin/containerd_cgroup_driver.sh",
+						Permissions: ptr.To[int32](0755),
+						Content: extensionsv1alpha1.FileContent{Inline: &extensionsv1alpha1.FileContentInline{Data: `#!/bin/bash
 
 set -Eeuo pipefail
 
@@ -369,9 +336,8 @@ if check_running_containerd_tasks; then
     fi
 fi
 `}},
-						},
-					))
-				})
+					},
+				))
 			})
 		})
 	})

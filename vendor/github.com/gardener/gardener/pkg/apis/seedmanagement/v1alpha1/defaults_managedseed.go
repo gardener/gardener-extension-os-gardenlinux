@@ -15,8 +15,6 @@
 package v1alpha1
 
 import (
-	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,12 +37,12 @@ func SetDefaults_ManagedSeed(obj *ManagedSeed) {
 func SetDefaults_GardenletDeployment(obj *GardenletDeployment) {
 	// Set default replica count
 	if obj.ReplicaCount == nil {
-		obj.ReplicaCount = ptr.To(int32(2))
+		obj.ReplicaCount = ptr.To[int32](2)
 	}
 
 	// Set default revision history limit
 	if obj.RevisionHistoryLimit == nil {
-		obj.RevisionHistoryLimit = ptr.To(int32(2))
+		obj.RevisionHistoryLimit = ptr.To[int32](2)
 	}
 
 	// Set default image
@@ -68,6 +66,7 @@ func SetDefaults_Image(obj *Image) {
 		} else {
 			pullPolicy = corev1.PullIfNotPresent
 		}
+
 		obj.PullPolicy = &pullPolicy
 	}
 }
@@ -145,7 +144,7 @@ func setDefaultsResources(obj *gardenletv1alpha1.ResourcesConfiguration) {
 func setDefaultsSeedSpec(spec *gardencorev1beta1.SeedSpec, name, namespace string) {
 	if spec.Backup != nil && spec.Backup.SecretRef == (corev1.SecretReference{}) {
 		spec.Backup.SecretRef = corev1.SecretReference{
-			Name:      fmt.Sprintf("backup-%s", name),
+			Name:      "backup-" + name,
 			Namespace: namespace,
 		}
 	}
