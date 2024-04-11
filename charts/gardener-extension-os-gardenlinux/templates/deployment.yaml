@@ -45,7 +45,6 @@ spec:
         - --ignore-operation-annotation={{ .Values.controllers.ignoreOperationAnnotation }}
         - --gardener-version={{ .Values.gardener.version }}
         - --metrics-bind-address=:{{ .Values.metrics.port }}
-        - --gardenlet-uses-gardener-node-agent={{ ternary .Values.gardener.gardenlet.featureGates.UseGardenerNodeAgent true (hasKey .Values.gardener.gardenlet.featureGates "UseGardenerNodeAgent") }}
         env:
         - name: LEADER_ELECTION_NAMESPACE
           valueFrom:

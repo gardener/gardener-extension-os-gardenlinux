@@ -80,16 +80,16 @@ type RuntimeCluster struct {
 	// Settings contains certain settings for this cluster.
 	// +optional
 	Settings *Settings `json:"settings,omitempty"`
+	// Volume contains settings for persistent volumes created in the runtime cluster.
+	// +optional
+	Volume *Volume `json:"volume,omitempty"`
 }
 
 // Ingress configures the Ingress specific settings of the runtime cluster.
 type Ingress struct {
-	// Deprecated: This field is deprecated and will be removed soon. Please use `Domains` instead.
-	// TODO(scheererj): Drop this after v1.90 has been released.
-	// +optional
-	Domain *string `json:"domain,omitempty"`
 	// Domains specify the ingress domains of the cluster pointing to the ingress controller endpoint. They will be used
 	// to construct ingress URLs for system applications running in runtime cluster.
+	// +kubebuilder:validation:MinItems=1
 	// +optional
 	Domains []string `json:"domains,omitempty"`
 	// Controller configures a Gardener managed Ingress Controller listening on the ingressDomain.
@@ -167,6 +167,13 @@ type SettingTopologyAwareRouting struct {
 	// Additionally, other components that are deployed to the runtime cluster via other means can read this field and
 	// according to its value enable/disable topology-aware routing for their Services.
 	Enabled bool `json:"enabled"`
+}
+
+// Volume contains settings for persistent volumes created in the runtime cluster.
+type Volume struct {
+	// MinimumSize defines the minimum size that should be used for PVCs in the runtime cluster.
+	// +optional
+	MinimumSize *resource.Quantity `json:"minimumSize,omitempty"`
 }
 
 // VirtualCluster contains configuration for the virtual cluster.
@@ -572,7 +579,7 @@ const (
 	// VirtualGardenAPIServerAvailable is a constant for a condition type indicating that the virtual garden's API server is available.
 	VirtualGardenAPIServerAvailable gardencorev1beta1.ConditionType = "VirtualGardenAPIServerAvailable"
 	// ObservabilityComponentsHealthy is a constant for a condition type indicating the health of observability components.
-	ObservabilityComponentsHealthy gardencorev1beta1.ConditionType = "ObservabilityComponentsHealthy"
+	ObservabilityComponentsHealthy gardencorev1beta1.ConditionType = v1beta1constants.ObservabilityComponentsHealthy
 )
 
 // AvailableOperationAnnotations is the set of available operation annotations for Garden resources.
