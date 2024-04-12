@@ -64,8 +64,8 @@ github.com/gardener/cert-management/pkg/apis/cert/v1alpha1
 # github.com/gardener/etcd-druid v0.22.0
 ## explicit; go 1.21
 github.com/gardener/etcd-druid/api/v1alpha1
-# github.com/gardener/gardener v1.92.0
-## explicit; go 1.22.2
+# github.com/gardener/gardener v1.92.1
+## explicit; go 1.22.0
 github.com/gardener/gardener/.github
 github.com/gardener/gardener/.github/ISSUE_TEMPLATE
 github.com/gardener/gardener/extensions/pkg/apis/config
