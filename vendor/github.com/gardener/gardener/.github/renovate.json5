@@ -59,7 +59,7 @@
     {
       // Group golang updates in one PR.
       "groupName": "golang",
-      "matchDatasources": ["docker", "go-version"],
+      "matchDatasources": ["docker"],
       "matchPackagePatterns": ["golang"],
     },
     {
@@ -67,6 +67,21 @@
       "groupName": "istio images",
       "matchDatasources": ["docker"],
       "matchPackagePatterns": ["gcr\\.io\/istio-release\/.+"],
+    },
+    {
+      // Group istio module updates in one PR.
+      "groupName": "istio modules",
+      "matchDatasources": ["go"],
+      "matchPackagePatterns": [
+        "istio\\.io\/api",
+        "istio\\.io\/client-go"
+      ],
+    },
+    {
+      // Group prometheus-operator image updates in one PR.
+      "groupName": "prometheus-operator images",
+      "matchDatasources": ["docker"],
+      "matchPackagePatterns": ["quay\\.io\/prometheus-operator\/.+"],
     },
     {
       // Only patch level updates for golang-test image. Minor and major versions are updated manually.
@@ -80,6 +95,15 @@
       "matchDatasources": ["docker"],
       "matchUpdateTypes": ["major", "minor"],
       "matchPackagePatterns": ["kindest\/node"],
+      "enabled": false
+    },
+    {
+      // Do not update to patch versions of the Go Toolchain.
+      // Default golang images set the environment variable GOTOOLCHAIN=local
+      // and we don't want to enforce every (test-)image to be on the latest patch level.
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["patch"],
+      "matchPackagePatterns": ["go"],
       "enabled": false
     },
     {
