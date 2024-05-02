@@ -1,18 +1,8 @@
 #!/usr/bin/env bash
 #
-# Copyright 2020 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Gardener contributors
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
 
 set -o errexit
 set -o nounset
@@ -35,6 +25,7 @@ AVAILABLE_CODEGEN_OPTIONS=(
   "scheduler_groups"
   "gardenlet_groups"
   "resourcemanager_groups"
+  "shootresourcereservation_groups"
   "shoottolerationrestriction_groups"
   "shootdnsrewriting_groups"
   "provider_local_groups"
@@ -452,6 +443,28 @@ shootdnsrewriting_groups() {
     -h "${PROJECT_ROOT}/hack/LICENSE_BOILERPLATE.txt"
 }
 export -f shootdnsrewriting_groups
+
+shootresourcereservation_groups() {
+  echo "Generating API groups for plugin/pkg/shoot/resourcereservation/apis/shootresourcereservation"
+
+  bash "${CODE_GEN_DIR}"/generate-internal-groups.sh \
+    deepcopy,defaulter \
+    github.com/gardener/gardener/pkg/client/componentconfig \
+    github.com/gardener/gardener/plugin/pkg/shoot/resourcereservation/apis \
+    github.com/gardener/gardener/plugin/pkg/shoot/resourcereservation/apis \
+    "shootresourcereservation:v1alpha1" \
+    -h "${PROJECT_ROOT}/hack/LICENSE_BOILERPLATE.txt"
+
+  bash "${CODE_GEN_DIR}"/generate-internal-groups.sh \
+    conversion \
+    github.com/gardener/gardener/pkg/client/componentconfig \
+    github.com/gardener/gardener/plugin/pkg/shoot/resourcereservation/apis \
+    github.com/gardener/gardener/plugin/pkg/shoot/resourcereservation/apis \
+    "shootresourcereservation:v1alpha1" \
+    --extra-peer-dirs=github.com/gardener/gardener/plugin/pkg/shoot/resourcereservation/apis/shootresourcereservation,github.com/gardener/gardener/plugin/pkg/shoot/resourcereservation/apis/shootresourcereservation/v1alpha1,k8s.io/apimachinery/pkg/apis/meta/v1,k8s.io/apimachinery/pkg/conversion,k8s.io/apimachinery/pkg/runtime,k8s.io/component-base/config,k8s.io/component-base/config/v1alpha1 \
+    -h "${PROJECT_ROOT}/hack/LICENSE_BOILERPLATE.txt"
+}
+export -f shootresourcereservation_groups
 
 # local.provider.extensions.gardener.cloud APIs
 

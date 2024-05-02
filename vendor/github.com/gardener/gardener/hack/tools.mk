@@ -1,16 +1,6 @@
-# Copyright 2021 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Gardener contributors
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
 
 # This make file is supposed to be included in the top-level make file.
 # It can be reused by repos vendoring g/g to have some common make recipes for building and installing development
@@ -30,7 +20,7 @@ endif
 
 SYSTEM_NAME                := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 SYSTEM_ARCH                := $(shell uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-TOOLS_BIN_DIR              := $(TOOLS_DIR)/bin
+TOOLS_BIN_DIR              := $(TOOLS_DIR)/bin/$(SYSTEM_NAME)-$(SYSTEM_ARCH)
 CONTROLLER_GEN             := $(TOOLS_BIN_DIR)/controller-gen
 GEN_CRD_API_REFERENCE_DOCS := $(TOOLS_BIN_DIR)/gen-crd-api-reference-docs
 GINKGO                     := $(TOOLS_BIN_DIR)/ginkgo
@@ -69,23 +59,23 @@ GO_ADD_LICENSE_VERSION ?= v1.1.1
 GOIMPORTSREVISER_VERSION ?= v3.6.4
 GO_VULN_CHECK_VERSION ?= latest
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.14.3
+HELM_VERSION ?= v3.14.4
 # renovate: datasource=github-releases depName=kubernetes-sigs/kind
 KIND_VERSION ?= v0.22.0
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.29.3
+KUBECTL_VERSION ?= v1.30.0
 # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize
 KUSTOMIZE_VERSION ?= v5.3.0
 # renovate: datasource=github-releases depName=prometheus/prometheus
-PROMTOOL_VERSION ?= 2.51.1
+PROMTOOL_VERSION ?= 2.51.2
 # renovate: datasource=github-releases depName=protocolbuffers/protobuf
 PROTOC_VERSION ?= 26.1
 # renovate: datasource=github-releases depName=GoogleContainerTools/skaffold
-SKAFFOLD_VERSION ?= v2.11.0
+SKAFFOLD_VERSION ?= v2.11.1
 # renovate: datasource=github-releases depName=mikefarah/yq
 YQ_VERSION ?= v4.43.1
 # renovate: datasource=github-releases depName=ironcore-dev/vgopath
-VGOPATH_VERSION ?= v0.1.4
+VGOPATH_VERSION ?= v0.1.5
 
 # tool versions from go.mod
 CONTROLLER_GEN_VERSION ?= $(call version_gomod,sigs.k8s.io/controller-tools)
@@ -124,6 +114,7 @@ version_gomod = $(shell go list -mod=mod -f '{{ .Version }}' -m $(1))
 # This way, we can generically determine, which version was installed without calling each and every binary explicitly.
 $(TOOLS_BIN_DIR)/.version_%:
 	@version_file=$@; rm -f $${version_file%_*}*
+	@mkdir -p $(TOOLS_BIN_DIR)
 	@touch $@
 
 .PHONY: clean-tools-bin
