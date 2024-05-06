@@ -64,6 +64,9 @@ type S3 struct {
 	RetryLimit *int32 `json:"RetryLimit,omitempty"`
 	// Specify an external ID for the STS API, can be used with the role_arn parameter if your role requires an external ID.
 	ExternalId string `json:"ExternalId,omitempty"`
+	// Option to specify an AWS Profile for credentials.
+	Profile      string `json:"Profile,omitempty"`
+	*plugins.TLS `json:"tls,omitempty"`
 }
 
 // Name implement Section() method
@@ -152,6 +155,16 @@ func (o *S3) Params(sl plugins.SecretLoader) (*params.KVs, error) {
 	}
 	if o.ExternalId != "" {
 		kvs.Insert("external_id", o.ExternalId)
+	}
+	if o.Profile != "" {
+		kvs.Insert("profile", o.Profile)
+	}
+	if o.TLS != nil {
+		tls, err := o.TLS.Params(sl)
+		if err != nil {
+			return nil, err
+		}
+		kvs.Merge(tls)
 	}
 	return kvs, nil
 }

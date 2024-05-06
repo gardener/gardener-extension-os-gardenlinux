@@ -1,16 +1,6 @@
-// Copyright 2018 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+// SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Gardener contributors
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
 
 package gardener
 
@@ -113,6 +103,7 @@ func ReadGardenSecrets(
 	c client.Reader,
 	namespace string,
 	enforceInternalDomainSecret bool,
+	enforceShootServiceAccountIssuerSecret bool,
 ) (
 	map[string]*corev1.Secret,
 	error,
@@ -224,6 +215,11 @@ func ReadGardenSecrets(
 
 	if numberOfGlobalMonitoringSecrets > 1 {
 		return nil, fmt.Errorf("can only accept at most one global monitoring secret, but found %d", numberOfGlobalMonitoringSecrets)
+	}
+
+	// Ensure that configuration exists if the ShootManagedIssuer feature gate is enabled.
+	if enforceShootServiceAccountIssuerSecret && numberOfShootServiceAccountIssuerSecrets == 0 {
+		return nil, fmt.Errorf("feature gate ShootManagedIssuer is enabled, but shoot service account issuer secret is missing")
 	}
 
 	// The managed shoot service account issuer is configured centrally per Garden cluster.

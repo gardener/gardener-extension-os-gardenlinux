@@ -14,7 +14,6 @@
 
 syntax = "proto3";
 
-import "google/api/field_behavior.proto";
 import "google/protobuf/struct.proto";
 import "networking/v1alpha3/sidecar.proto";
 
@@ -335,7 +334,7 @@ import "networking/v1alpha3/sidecar.proto";
 //   #   to avoid accidental name collisions.
 //   - applyTo: EXTENSION_CONFIG
 //     patch:
-//       operation: ADD # REPLACE is also supported, and would override a cluster level resource with the same name.
+//       operation: ADD
 //       value:
 //         name: my-wasm-extension
 //         typed_config:
@@ -372,41 +371,6 @@ import "networking/v1alpha3/sidecar.proto";
 //           type_urls: ["type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm"]
 // ```
 //
-// The following example adds a Wasm service extension for all proxies using a locally available Wasm file.
-// The singleton Wasm extension is used to maintain a shared state between workers executing Wasm filters.
-// For example, a local rate limit extension would rely on a singleton to limit requests across all workers.
-// As another example, an authorization Wasm extension can use a singleton to maintain a database of accounts.
-//
-// ```yaml
-// apiVersion: networking.istio.io/v1alpha3
-// kind: EnvoyFilter
-// metadata:
-//   name: wasm-service
-//   namespace: myns
-// spec:
-//   configPatches:
-//   - applyTo: BOOTSTRAP
-//     patch:
-//       operation: MERGE
-//       value:
-//         bootstrap_extensions:
-//         - name: envoy.bootstrap.wasm
-//           typed_config:
-//             "@type": type.googleapis.com/envoy.extensions.wasm.v3.WasmService
-//             singleton: true
-//             config:
-//               name: my_plugin
-//               configuration:
-//                 "@type": type.googleapis.com/google.protobuf.StringValue
-//                 value: |
-//                   {}
-//               vm_config:
-//                 runtime: "envoy.wasm.runtime.v8"
-//                 code:
-//                   local:
-//                     filename: "/etc/envoy_filter_http_wasm_example.wasm"
-// ```
-//
 // The following example inserts an `envoy.filters.listener.proxy_protocol` listener filter before the `envoy.filters.listener.tls_inspector`.
 //
 // ```yaml
@@ -419,7 +383,7 @@ import "networking/v1alpha3/sidecar.proto";
 //   configPatches:
 //   - applyTo: LISTENER_FILTER
 //     match:
-//       context: SIDECAR_INBOUND # will match outbound listeners in all sidecars
+//       context: SIDECAR_INBOUND # will match inbound listeners in all sidecars
 //       listener:
 //         portNumber: 15006
 //         listenerFilter: "envoy.filters.listener.tls_inspector"
@@ -496,7 +460,7 @@ message EnvoyFilter {
     // is only supported by HTTP filters.
     EXTENSION_CONFIG = 9;
 
-    // Applies the patch to bootstrap configuration.
+    // DEPRECATED. Applies the patch to bootstrap configuration.
     BOOTSTRAP = 10;
 
     // Applies the patch to the listener filter.
@@ -878,15 +842,13 @@ message EnvoyFilter {
   // Criteria used to select the specific set of pods/VMs on which
   // this patch configuration should be applied. If omitted, the set
   // of patches in this configuration will be applied to all workload
-  // instances in the same namespace.  If omitted, the `EnvoyFilter`
-  // patches will be applied to all workloads in the same
-  // namespace. If the `EnvoyFilter` is present in the config root
-  // namespace, it will be applied to all applicable workloads in any
-  // namespace.
+  // instances in the same namespace. If the `EnvoyFilter` is present
+  // in the config root namespace, it will be applied to all applicable
+  // workloads in any namespace.
   WorkloadSelector workload_selector = 3;
 
   // One or more patches with match conditions.
-  repeated EnvoyConfigObjectPatch config_patches = 4 [(google.api.field_behavior) = REQUIRED];
+  repeated EnvoyConfigObjectPatch config_patches = 4;
 
   // Priority defines the order in which patch sets are applied within a context.
   // When one patch depends on another patch, the order of patch application

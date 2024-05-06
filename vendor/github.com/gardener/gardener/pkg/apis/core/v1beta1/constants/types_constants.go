@@ -1,16 +1,6 @@
-// Copyright 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+// SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Gardener contributors
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
 
 package constants
 
@@ -425,11 +415,22 @@ const (
 	LabelLogging = "logging"
 	// LabelMonitoring is a constant for a label for monitoring stack configurations
 	LabelMonitoring = "monitoring"
+	// LabelPrefixMonitoringDashboard is the prefix of a label key on ConfigMaps for indicating that the data contains a
+	// dashboard.
+	LabelPrefixMonitoringDashboard = "dashboard.monitoring.gardener.cloud/"
 	// LabelKeyCustomLoggingResource is the key of the label which is used from the operator to select the CustomResources which will be imported in the FluentBit configuration.
 	// TODO(nickytd): the label key has to be migrated to "fluentbit.gardener.cloud/type".
 	LabelKeyCustomLoggingResource = "fluentbit.gardener/type"
 	// LabelValueCustomLoggingResource is the value of the label which is used from the operator to select the CustomResources which will be imported in the FluentBit configuration.
 	LabelValueCustomLoggingResource = "seed"
+	// LabelSeedNetwork is used to specify whether the seed is reachable from the garden cluster.
+	LabelSeedNetwork = "seed.gardener.cloud/network"
+	// LabelSeedNetworkPrivate is used to specify that the seed is in private networks and not reachable from the garden
+	// cluster.
+	LabelSeedNetworkPrivate = "private"
+	// LabelKeyAggregateToProjectMember is a constant for a label on ClusterRoles that are aggregated to the project
+	// member ClusterRole.
+	LabelKeyAggregateToProjectMember = "rbac.gardener.cloud/aggregate-to-project-member"
 
 	// LabelSecretBindingReference is used to identify secrets which are referred by a SecretBinding (not necessarily in the same namespace).
 	LabelSecretBindingReference = "reference.gardener.cloud/secretbinding"
@@ -491,6 +492,10 @@ const (
 	// which should be scraped by Prometheus.
 	// See https://github.com/gardener/gardener/blob/master/docs/concepts/resource-manager.md#overwriting-the-pod-selector-label.
 	LabelNetworkPolicyScrapeTargets = "all-scrape-targets"
+	// LabelNetworkPolicyGardenScrapeTargets is a constant for pod selector label which can be used on Services for
+	// garden system components or extensions which should be scraped by Prometheus.
+	// See https://github.com/gardener/gardener/blob/master/docs/concepts/resource-manager.md#overwriting-the-pod-selector-label.
+	LabelNetworkPolicyGardenScrapeTargets = "all-garden-scrape-targets"
 	// LabelNetworkPolicySeedScrapeTargets is a constant for pod selector label which can be used on Services for
 	// seed system components or extensions which should be scraped by Prometheus.
 	// See https://github.com/gardener/gardener/blob/master/docs/concepts/resource-manager.md#overwriting-the-pod-selector-label.
@@ -560,6 +565,26 @@ const (
 	// The value can be true or false.
 	LabelNodeLocalDNS = "networking.gardener.cloud/node-local-dns-enabled"
 
+	// LabelVPAEvictionRequirementsController is a constant for a label indicating that a VPA resource is under control
+	// of the VPAEvictionRequirementsController.
+	LabelVPAEvictionRequirementsController = "autoscaling.gardener.cloud/eviction-requirements"
+	// EvictionRequirementManagedByController is a constant to be used as a value for the label LabelVPAEvictionRequirementsController
+	// to indicate that the vpa-eviction-requirements-controller manages all EvictionRequirements on a VPA object.
+	EvictionRequirementManagedByController = "managed-by-controller"
+
+	// AnnotationVPAEvictionRequirementDownscaleRestriction is a constant for an annotation key on a VPA object indicating that
+	// the VPAEvictionRequirementsController should add an EvictionRestriction that prevents downscaling.
+	// Possible values are "in-maintenance-window-only" and "never", available as constants below.
+	AnnotationVPAEvictionRequirementDownscaleRestriction = "eviction-requirements.autoscaling.gardener.cloud/downscale-restriction"
+	// EvictionRequirementInMaintenanceWindowOnly is a constant to be used as a value for the annotation AnnotationVPAEvictionRequirementDownscaleRestriction,
+	// indicating that downscaling should be restricted to the Shoot's maintenance window.
+	EvictionRequirementInMaintenanceWindowOnly = "in-maintenance-window-only"
+	// EvictionRequirementNever is a constant to be used as a value for the annotation AnnotationVPAEvictionRequirementDownscaleRestriction,
+	// indicating that downscaling should never be allowed.
+	EvictionRequirementNever = "never"
+	// AnnotationShootMaintenanceWindow is a constant for an annotation key used on VPA objects to hold the Shoot's maintenance window start and end.
+	AnnotationShootMaintenanceWindow = "shoot.gardener.cloud/maintenance-window"
+
 	// GardenNamespace is the namespace in which the configuration and secrets for
 	// the Gardener controller manager will be stored (e.g., secrets for the Seed clusters).
 	// It is also used by the gardener-apiserver.
@@ -619,11 +644,6 @@ const (
 	// Kubernetes resources' step. Concretely, after the specified seconds, all the finalizers of the affected resources
 	// are forcefully removed.
 	AnnotationShootCleanupKubernetesResourcesFinalizeGracePeriodSeconds = "shoot.gardener.cloud/cleanup-kubernetes-resources-finalize-grace-period-seconds"
-	// AnnotationShootInfrastructureCleanupWaitPeriodSeconds is a key for an annotation on a Shoot
-	// resource that declares the wait period in seconds for infrastructure resources cleanup. Concretely,
-	// Gardener will wait for the specified time after the Infrastructure extension object has been deleted to allow
-	// controllers to gracefully cleanup everything (default behaviour is 300s).
-	AnnotationShootInfrastructureCleanupWaitPeriodSeconds = "shoot.gardener.cloud/infrastructure-cleanup-wait-period-seconds"
 	// AnnotationShootCloudConfigExecutionMaxDelaySeconds is a key for an annotation on a Shoot resource that declares
 	// the maximum delay in seconds when potentially updated cloud-config user data is executed on the worker nodes.
 	// Concretely, the gardener-node-agent systemd service running on all worker nodes will wait
@@ -670,8 +690,14 @@ const (
 	// PrometheusConfigMapScrapeConfig is a constant for the Prometheus scrape config tag in provider-specific monitoring configuration
 	PrometheusConfigMapScrapeConfig = "scrape_config"
 	// PlutonoConfigMapUserDashboard is a constant for the Plutono user dashboard tag in provider-specific monitoring configuration
+	// Deprecated: This field will be removed in a future version. Migrate to the new approach, for more details see
+	// https://github.com/gardener/gardener/blob/master/docs/extensions/logging-and-monitoring.md#plutono-dashboards.
+	// TODO(rfranzke): Remove this constant after v1.100 has been released.
 	PlutonoConfigMapUserDashboard = "dashboard_users"
 	// PlutonoConfigMapOperatorDashboard is a constant for the Plutono operator dashboard tag in provider-specific monitoring configuration
+	// Deprecated: This field will be removed in a future version. Migrate to the new approach, for more details see
+	// https://github.com/gardener/gardener/blob/master/docs/extensions/logging-and-monitoring.md#plutono-dashboards.
+	// TODO(rfranzke): Remove this constant after v1.100 has been released.
 	PlutonoConfigMapOperatorDashboard = "dashboard_operators"
 
 	// LabelControllerRegistrationName is the key of a label on extension namespaces that indicates the controller registration name.
@@ -727,6 +753,9 @@ const (
 	// ShootGroupViewers is a constant for a group name in shoot clusters whose users get read-only privileges (except
 	// for core/v1.Secrets).
 	ShootGroupViewers = "gardener.cloud:system:viewers"
+	// ClusterRoleNameGardenerAdministrators is the name of a cluster role in the garden cluster defining privileges
+	// for administrators.
+	ClusterRoleNameGardenerAdministrators = "gardener.cloud:system:administrators"
 
 	// ProjectName is the key of a label on namespaces whose value holds the project name.
 	ProjectName = "project.gardener.cloud/name"
@@ -778,6 +807,9 @@ const (
 
 	// IngressTLSCertificateValidity is the default validity for ingress TLS certificates.
 	IngressTLSCertificateValidity = 730 * 24 * time.Hour // ~2 years, see https://support.apple.com/en-us/HT210176
+	// IngressDomainPrefixPrometheusAggregate is the prefix of a domain exposing prometheus-aggregate in seed clusters.
+	IngressDomainPrefixPrometheusAggregate = "p-seed"
+
 	// VPNTunnel dictates that VPN is used as a tunnel between seed and shoot networks.
 	VPNTunnel string = "vpn-shoot"
 
@@ -887,6 +919,10 @@ const (
 	// AnnotationPrefixWaitForCSINode is the annotation key for csi-driver-node pods, indicating they use the driver
 	// specified in the value.
 	AnnotationPrefixWaitForCSINode = "node.gardener.cloud/wait-for-csi-node-"
+	// AnnotationNodeAgentReconciliationDelay is the annotation key for specifying how long the gardener-node-agent
+	// should wait with reconciliation of the operating system config (to prevent too many node-agents from restarting
+	// kubelet or other critical units at the same time).
+	AnnotationNodeAgentReconciliationDelay = "node-agent.gardener.cloud/reconciliation-delay"
 
 	// GardenPurposeMachineClass is a constant for the 'machineclass' value in a label.
 	GardenPurposeMachineClass = "machineclass"
