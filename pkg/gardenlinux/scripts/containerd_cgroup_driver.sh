@@ -17,7 +17,7 @@ function check_no_running_containerd_tasks {
     fi
 
     # count the number of containerd tasks in the k8s.io namespace
-    num_tasks=$(find /run/containerd/io.containerd.runtime.v2.task/k8s.io/ | wc -l)
+    num_tasks=$(find /run/containerd/io.containerd.runtime.v2.task/k8s.io/ -maxdepth 1 -type d | wc -l)
 
     if [ "$num_tasks" -eq 0 ]; then
         echo "no active tasks in k8s.io namespace" 
