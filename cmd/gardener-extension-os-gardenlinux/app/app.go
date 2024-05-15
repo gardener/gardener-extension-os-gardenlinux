@@ -15,6 +15,7 @@ import (
 	heartbeatcmd "github.com/gardener/gardener/extensions/pkg/controller/heartbeat/cmd"
 	osccontroller "github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig"
 	"github.com/gardener/gardener/extensions/pkg/util"
+	webhookcmd "github.com/gardener/gardener/extensions/pkg/webhook/cmd"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	componentbaseconfig "k8s.io/component-base/config"
@@ -22,6 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/controller/operatingsystemconfig"
+	oscwebhook "github.com/gardener/gardener-extension-os-gardenlinux/pkg/webhook/operatingsystemconfig"
 )
 
 var ctrlName = "gardenlinux"
@@ -53,6 +55,22 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 			controllercmd.Switch(heartbeat.ControllerName, heartbeat.AddToManager),
 		)
 
+		webhookServerOpts = &webhookcmd.ServerOptions{
+			Namespace: os.Getenv("WEBHOOK_CONFIG_NAMESPACE"),
+		}
+
+		webhookSwitches = webhookcmd.NewSwitchOptions(
+			webhookcmd.Switch(oscwebhook.WebhookName, oscwebhook.AddToManager),
+		)
+
+		webhookOpts = webhookcmd.NewAddToManagerOptions(
+			"os-gardenlinux",
+			"",
+			nil,
+			webhookServerOpts,
+			webhookSwitches,
+		)
+
 		aggOption = controllercmd.NewOptionAggregator(
 			generalOpts,
 			restOpts,
@@ -61,6 +79,7 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 			controllercmd.PrefixOption("heartbeat-", heartbeatCtrlOpts),
 			reconcileOpts,
 			controllerSwitches,
+			webhookOpts,
 		)
 	)
 
@@ -107,6 +126,10 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 
 			if err := controllerSwitches.Completed().AddToManager(ctx, mgr); err != nil {
 				return fmt.Errorf("could not add controller to manager: %w", err)
+			}
+
+			if _, err := webhookOpts.Completed().AddToManager(ctx, mgr, nil); err != nil {
+				return fmt.Errorf("could not add the mutating webhook to manager: %w", err)
 			}
 
 			if err := mgr.Start(ctx); err != nil {
