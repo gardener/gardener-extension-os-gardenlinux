@@ -10,6 +10,7 @@ metadata:
     # TODO: This label approach is deprecated and no longer needed in the future. Remove them as soon as gardener/gardener@v1.75 has been released.
     networking.resources.gardener.cloud/from-policy-pod-label-selector: all-seed-scrape-targets
     networking.resources.gardener.cloud/from-policy-allowed-ports: '[{"port":{{ .Values.metrics.port }},"protocol":"TCP"}]'
+    networking.resources.gardener.cloud/from-world-to-ports: '[{"protocol":"TCP","port":{{ .Values.webhookConfig.serverPort }}}]'
   labels:
     app.kubernetes.io/name: gardener-extension-os-gardenlinux
     helm.sh/chart: gardener-extension-os-gardenlinux
@@ -23,3 +24,7 @@ spec:
   - name: metrics
     port: {{ .Values.metrics.port }}
     protocol: TCP
+  - name: webhook-server
+    port: {{ .Values.webhookConfig.servicePort }}
+    protocol: TCP
+    targetPort: {{ .Values.webhookConfig.serverPort }}
