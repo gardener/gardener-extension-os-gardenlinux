@@ -24,6 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	gardencoreinstall "github.com/gardener/gardener/pkg/apis/core/install"
+	securityinstall "github.com/gardener/gardener/pkg/apis/security/install"
 	seedmanagementinstall "github.com/gardener/gardener/pkg/apis/seedmanagement/install"
 	settingsinstall "github.com/gardener/gardener/pkg/apis/settings/install"
 )
@@ -51,6 +52,7 @@ func init() {
 		gardencoreinstall.AddToScheme,
 		seedmanagementinstall.AddToScheme,
 		settingsinstall.AddToScheme,
+		securityinstall.AddToScheme,
 	)
 
 	utilruntime.Must(apiutil.AddToProtobufScheme(protobufSchemeBuilder.AddToScheme))

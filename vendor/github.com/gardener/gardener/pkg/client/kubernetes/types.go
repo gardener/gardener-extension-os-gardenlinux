@@ -39,6 +39,7 @@ import (
 	operationsinstall "github.com/gardener/gardener/pkg/apis/operations/install"
 	operatorv1alpha1 "github.com/gardener/gardener/pkg/apis/operator/v1alpha1"
 	resourcesv1alpha1 "github.com/gardener/gardener/pkg/apis/resources/v1alpha1"
+	securityinstall "github.com/gardener/gardener/pkg/apis/security/install"
 	seedmanagementinstall "github.com/gardener/gardener/pkg/apis/seedmanagement/install"
 	settingsinstall "github.com/gardener/gardener/pkg/apis/settings/install"
 	"github.com/gardener/gardener/pkg/chartrenderer"
@@ -94,6 +95,7 @@ var (
 		settingsinstall.AddToScheme,
 		operationsinstall.AddToScheme,
 		apiregistrationscheme.AddToScheme,
+		securityinstall.AddToScheme,
 	)
 
 	seedSchemeBuilder = runtime.NewSchemeBuilder(
