@@ -7,7 +7,7 @@
 // +k8s:openapi-gen=true
 // +k8s:defaulter-gen=TypeMeta
 
-//go:generate gen-crd-api-reference-docs -api-dir . -config ../../../../hack/api-reference/memoryonegardenlinux.json -template-dir ../../../../vendor/github.com/gardener/gardener/hack/api-reference/template -out-file ../../../../hack/api-reference/memoryonegardenlinux.md
+//go:generate gen-crd-api-reference-docs -api-dir . -config ../../../../hack/api-reference/memoryonegardenlinux.json -template-dir $GARDENER_HACK_DIR/api-reference/template -out-file ../../../../hack/api-reference/memoryonegardenlinux.md
 
 // Package v1alpha1 contains the v1alpha1 version of the API.
 // +groupName=memoryone-gardenlinux.os.extensions.gardener.cloud

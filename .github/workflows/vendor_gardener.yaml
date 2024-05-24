@@ -13,9 +13,9 @@ jobs:
     - uses: actions/setup-go@v3
       with:
         go-version-file: go.mod
-      
-    - name: Make revendor
-      run: make revendor
+
+    - name: Make tidy
+      run: make tidy
     - name: Commit changes
       run: |
         # Exit early if there is nothing to commit. This can happen if someone pushes to the dependabot's PR (for example has to adapt to a breaking change).
@@ -23,7 +23,7 @@ jobs:
           echo "Nothing to commit, working tree clean. Exiting..."
           exit 0
         fi
-        
+
         git config user.name gardener-robot-ci-1
         git config user.email gardener.ci.user@gmail.com
 
