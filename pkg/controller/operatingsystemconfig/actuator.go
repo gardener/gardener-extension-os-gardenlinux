@@ -136,7 +136,6 @@ Content-Type: text/x-shellscript
 }
 
 var (
-	scriptContentGFunctions             []byte
 	scriptContentKubeletCGroupDriver    []byte
 	scriptContentContainerdCGroupDriver []byte
 )
@@ -144,8 +143,6 @@ var (
 func init() {
 	var err error
 
-	scriptContentGFunctions, err = gardenlinux.Templates.ReadFile(filepath.Join("scripts", "g_functions.sh"))
-	utilruntime.Must(err)
 	scriptContentKubeletCGroupDriver, err = gardenlinux.Templates.ReadFile(filepath.Join("scripts", "kubelet_cgroup_driver.sh"))
 	utilruntime.Must(err)
 	scriptContentContainerdCGroupDriver, err = gardenlinux.Templates.ReadFile(filepath.Join("scripts", "containerd_cgroup_driver.sh"))
@@ -157,13 +154,6 @@ func (a *actuator) handleReconcileOSC(_ *extensionsv1alpha1.OperatingSystemConfi
 		extensionUnits []extensionsv1alpha1.Unit
 		extensionFiles []extensionsv1alpha1.File
 	)
-
-	filePathFunctionsHelperScript := filepath.Join(gardenlinux.ScriptLocation, "g_functions.sh")
-	extensionFiles = append(extensionFiles, extensionsv1alpha1.File{
-		Path:        filePathFunctionsHelperScript,
-		Content:     extensionsv1alpha1.FileContent{Inline: &extensionsv1alpha1.FileContentInline{Data: string(scriptContentGFunctions)}},
-		Permissions: &gardenlinux.ScriptPermissions,
-	})
 
 	// add scripts and dropins for kubelet
 	filePathKubeletCGroupDriverScript := filepath.Join(gardenlinux.ScriptLocation, "kubelet_cgroup_driver.sh")
@@ -180,7 +170,7 @@ func (a *actuator) handleReconcileOSC(_ *extensionsv1alpha1.OperatingSystemConfi
 ExecStartPre=` + filePathKubeletCGroupDriverScript + `
 `,
 		}},
-		FilePaths: []string{filePathFunctionsHelperScript, filePathKubeletCGroupDriverScript},
+		FilePaths: []string{filePathKubeletCGroupDriverScript},
 	})
 
 	// add scripts and dropins for containerd
@@ -198,7 +188,7 @@ ExecStartPre=` + filePathKubeletCGroupDriverScript + `
 ExecStartPre=` + filePathContainerdCGroupDriverScript + `
 `,
 		}},
-		FilePaths: []string{filePathFunctionsHelperScript, filePathContainerdCGroupDriverScript},
+		FilePaths: []string{filePathContainerdCGroupDriverScript},
 	})
 
 	return extensionUnits, extensionFiles, nil
