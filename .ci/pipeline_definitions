@@ -1,4 +1,16 @@
 gardener-extension-os-gardenlinux:
+  templates: 
+    helmcharts:
+    - &os-gardenlinux
+      name: os-gardenlinux
+      dir: charts/gardener-extension-os-gardenlinux
+      registry: europe-docker.pkg.dev/gardener-project/snapshots/charts/gardener/extensions
+      mappings:
+      - ref: ocm-resource:gardener-extension-os-gardenlinux.repository
+        attribute: image.repository
+      - ref: ocm-resource:gardener-extension-os-gardenlinux.tag
+        attribute: image.tag
+  
   base_definition:
     traits:
       component_descriptor:
@@ -25,11 +37,17 @@ gardener-extension-os-gardenlinux:
         draft_release: ~
         options:
           public_build_logs: true
+        publish:
+          helmcharts:
+          - *os-gardenlinux
     pull-request:
       traits:
         pull-request: ~
         options:
           public_build_logs: true
+        publish:
+          helmcharts:
+          - *os-gardenlinux
     release:
       traits:
         version:
@@ -51,3 +69,6 @@ gardener-extension-os-gardenlinux:
             gardener-extension-os-gardenlinux:
               tag_as_latest: true
               image: europe-docker.pkg.dev/gardener-project/releases/gardener/extensions/os-gardenlinux
+          helmcharts:
+          - <<: *os-gardenlinux
+            registry: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions
