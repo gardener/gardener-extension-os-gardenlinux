@@ -146,10 +146,15 @@ Content-Type: text/x-shellscript
 				Expect(userData).To(BeEmpty())
 			})
 
-			It("should not add any additional units or files", func() {
+			It("should add one empty additional unit for containerd", func() {
 				_, units, files, err := actuator.Reconcile(ctx, log, osc)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(units).To(BeEmpty())
+				Expect(len(units)).To(Equal(1))
+				Expect(units).To(ContainElement(
+					extensionsv1alpha1.Unit{
+						Name: "containerd.service",
+					},
+				))
 				Expect(files).To(BeEmpty())
 			})
 		})

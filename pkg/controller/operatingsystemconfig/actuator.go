@@ -133,5 +133,13 @@ Content-Type: text/x-shellscript
 }
 
 func (a *actuator) handleReconcileOSC(_ *extensionsv1alpha1.OperatingSystemConfig) ([]extensionsv1alpha1.Unit, []extensionsv1alpha1.File, error) {
-	return nil, nil, nil
+
+	// TODO(MrBatschner): remove once https://github.com/gardener/gardener/issues/10809 in GNA has been resolved
+	extensionUnits := []extensionsv1alpha1.Unit{
+		{
+			Name: "containerd.service",
+		},
+	}
+
+	return extensionUnits, nil, nil
 }
