@@ -12,7 +12,7 @@ var (
 	//go:embed scripts/*
 	Templates embed.FS
 
-	ScriptPermissions = int32(0755)
+	ScriptPermissions = uint32(0755)
 )
 
 const (

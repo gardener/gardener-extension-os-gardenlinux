@@ -31,6 +31,8 @@ var _ = Describe("Actuator", func() {
 		fakeClient client.Client
 		mgr        manager.Manager
 
+		scriptPermissions uint32 = 0755
+
 		osc      *extensionsv1alpha1.OperatingSystemConfig
 		actuator operatingsystemconfig.Actuator
 	)
@@ -174,7 +176,7 @@ ExecStartPre=/opt/gardener/bin/containerd_cgroup_driver.sh
 				Expect(extensionFiles).To(ConsistOf(
 					extensionsv1alpha1.File{
 						Path:        "/opt/gardener/bin/g_functions.sh",
-						Permissions: ptr.To[int32](0755),
+						Permissions: ptr.To(scriptPermissions),
 						Content: extensionsv1alpha1.FileContent{Inline: &extensionsv1alpha1.FileContentInline{Data: `#!/bin/bash
 
 set -Eeuo pipefail
@@ -242,7 +244,7 @@ function check_running_containerd_tasks {
 					},
 					extensionsv1alpha1.File{
 						Path:        "/opt/gardener/bin/kubelet_cgroup_driver.sh",
-						Permissions: ptr.To[int32](0755),
+						Permissions: ptr.To(scriptPermissions),
 						Content: extensionsv1alpha1.FileContent{Inline: &extensionsv1alpha1.FileContentInline{Data: `#!/bin/bash
 
 set -Eeuo pipefail
@@ -299,7 +301,7 @@ fi
 					},
 					extensionsv1alpha1.File{
 						Path:        "/opt/gardener/bin/containerd_cgroup_driver.sh",
-						Permissions: ptr.To[int32](0755),
+						Permissions: ptr.To(scriptPermissions),
 						Content: extensionsv1alpha1.FileContent{Inline: &extensionsv1alpha1.FileContentInline{Data: `#!/bin/bash
 
 set -Eeuo pipefail
