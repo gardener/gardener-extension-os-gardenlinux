@@ -31,8 +31,6 @@ var _ = Describe("Actuator", func() {
 		fakeClient client.Client
 		mgr        manager.Manager
 
-		scriptPermissions uint32 = 0755
-
 		osc      *extensionsv1alpha1.OperatingSystemConfig
 		actuator operatingsystemconfig.Actuator
 	)

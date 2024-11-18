@@ -164,7 +164,7 @@ func filesWithKkubletConfig(kubeletConfig *kubeletconfigv1beta1.KubeletConfigura
 	return []extensionsv1alpha1.File{
 		{
 			Path:        v1beta1constants.OperatingSystemConfigFilePathKubeletConfig,
-			Permissions: ptr.To(int32(0644)),
+			Permissions: ptr.To(uint32(0644)),
 			Content: extensionsv1alpha1.FileContent{
 				Inline: kubeletConfigFci,
 			},
