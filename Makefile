@@ -82,6 +82,14 @@ generate: $(VGOPATH) $(CONTROLLER_GEN) $(GEN_CRD_API_REFERENCE_DOCS) $(HELM) $(M
 	@REPO_ROOT=$(REPO_ROOT) VGOPATH=$(VGOPATH) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(GARDENER_HACK_DIR)/generate-sequential.sh ./charts/... ./cmd/... ./pkg/...
 	$(MAKE) format
 
+.PHONY: sast
+sast: $(GOSEC)
+	@./hack/sast.sh
+
+.PHONY: sast-report
+sast-report: $(GOSEC)
+	@./hack/sast.sh --gosec-report true
+
 .PHONY: format
 format: $(GOIMPORTS) $(GOIMPORTSREVISER)
 	@bash $(GARDENER_HACK_DIR)/format.sh ./cmd ./pkg
@@ -99,7 +107,7 @@ test-clean:
 	@bash $(GARDENER_HACK_DIR)/test-cover-clean.sh
 
 .PHONY: verify
-verify: check format test
+verify: check format sast test
 
 .PHONY: verify-extended
-verify-extended: check-generate check format test-cov test-clean
+verify-extended: check-generate check format sast-report test-cov test-clean
