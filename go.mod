@@ -15,6 +15,7 @@ require (
 	k8s.io/apimachinery v0.31.2
 	k8s.io/code-generator v0.31.2
 	k8s.io/component-base v0.31.2
+	k8s.io/kubelet v0.31.2
 	k8s.io/utils v0.0.0-20241104163129-6fe5fd82f078
 	sigs.k8s.io/controller-runtime v0.19.1
 )
@@ -126,7 +127,6 @@ require (
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-aggregator v0.31.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20240808142205-8e686545bdb8 // indirect
-	k8s.io/kubelet v0.31.2 // indirect
 	k8s.io/metrics v0.31.2 // indirect
 	sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20231015215740-bf15e44028f9 // indirect
 	sigs.k8s.io/controller-tools v0.16.5 // indirect
