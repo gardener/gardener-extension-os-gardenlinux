@@ -34,4 +34,4 @@ metrics:
 
 webhookConfig:
   servicePort: 443
-  serverPort: 10251
+  serverPort: 10250
