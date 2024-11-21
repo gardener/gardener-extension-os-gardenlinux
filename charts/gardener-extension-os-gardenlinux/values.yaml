@@ -31,3 +31,7 @@ metrics:
   # enable metrics scraping
   enableScraping: true
   port: 8080
+
+webhookConfig:
+  servicePort: 443
+  serverPort: 10250
