@@ -14,6 +14,7 @@ VERSION                     := $(shell cat "$(REPO_ROOT)/VERSION")
 LD_FLAGS                    := "-w -X github.com/gardener/$(EXTENSION_PREFIX)-$(NAME)/pkg/version.Version=$(IMAGE_TAG)"
 LEADER_ELECTION             := true
 IGNORE_OPERATION_ANNOTATION := true
+PLATFORM                    ?= linux/amd64
 
 #########################################
 # Tools                                 #
@@ -50,7 +51,13 @@ docker-login:
 
 .PHONY: docker-images
 docker-images:
-	@docker build -t $(IMAGE_PREFIX)/$(NAME):$(VERSION) -t $(IMAGE_PREFIX)/$(NAME):latest -f Dockerfile -m 6g --target $(EXTENSION_PREFIX)-$(NAME) .
+	@docker buildx build --platform=$(PLATFORM) \
+		-t $(IMAGE_PREFIX)/$(NAME):$(VERSION) \
+		-t $(IMAGE_PREFIX)/$(NAME):latest \
+		-f Dockerfile \
+		-m 6g \
+		--target $(EXTENSION_PREFIX)-$(NAME) \
+		.
 
 #####################################################################
 # Rules for verification, formatting, linting, testing and cleaning #
