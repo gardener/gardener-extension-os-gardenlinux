@@ -151,6 +151,14 @@ Content-Type: text/x-shellscript
 				Expect(units).To(ContainElement(
 					extensionsv1alpha1.Unit{
 						Name: "containerd.service",
+						DropIns: []extensionsv1alpha1.DropIn{
+							{
+								Name: "override.conf",
+								Content: `[Service]
+LimitMEMLOCK=67108864
+LimitNOFILE=1048576`,
+							},
+						},
 					},
 				))
 				Expect(files).To(BeEmpty())
