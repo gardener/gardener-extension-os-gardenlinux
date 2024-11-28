@@ -134,10 +134,17 @@ Content-Type: text/x-shellscript
 
 func (a *actuator) handleReconcileOSC(_ *extensionsv1alpha1.OperatingSystemConfig) ([]extensionsv1alpha1.Unit, []extensionsv1alpha1.File, error) {
 
-	// TODO(MrBatschner): remove once https://github.com/gardener/gardener/issues/10809 in GNA has been resolved
 	extensionUnits := []extensionsv1alpha1.Unit{
 		{
 			Name: "containerd.service",
+			DropIns: []extensionsv1alpha1.DropIn{
+				{
+					Name: "override.conf",
+					Content: `[Service]
+LimitMEMLOCK=67108864
+LimitNOFILE=1048576`,
+				},
+			},
 		},
 	}
 
