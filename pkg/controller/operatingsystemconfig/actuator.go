@@ -8,13 +8,17 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"path/filepath"
 
 	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
+	"github.com/gardener/gardener/pkg/utils"
 	"github.com/go-logr/logr"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/gardenlinux"
 	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/memoryone"
 )
 
@@ -36,8 +40,8 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, osc *extensio
 		return []byte(userData), nil, nil, nil, err
 
 	case extensionsv1alpha1.OperatingSystemConfigPurposeReconcile:
-		extensionUnits, extensionFiles, err := a.handleReconcileOSC(osc)
-		return nil, extensionUnits, extensionFiles, nil, err
+		extensionUnits, extensionFiles, inPlaceUpdates, err := a.handleReconcileOSC(osc)
+		return nil, extensionUnits, extensionFiles, inPlaceUpdates, err
 
 	default:
 		return nil, nil, nil, nil, fmt.Errorf("unknown purpose: %s", purpose)
@@ -134,9 +138,23 @@ Content-Type: text/x-shellscript
 	return out, nil
 }
 
-func (a *actuator) handleReconcileOSC(_ *extensionsv1alpha1.OperatingSystemConfig) ([]extensionsv1alpha1.Unit, []extensionsv1alpha1.File, error) {
+var scriptContentInPlaceUpdate []byte
 
-	extensionUnits := []extensionsv1alpha1.Unit{
+func init() {
+	var err error
+
+	scriptContentInPlaceUpdate, err = gardenlinux.Templates.ReadFile(filepath.Join("scripts", "inplace-update.sh"))
+	utilruntime.Must(err)
+}
+
+func (a *actuator) handleReconcileOSC(osc *extensionsv1alpha1.OperatingSystemConfig) ([]extensionsv1alpha1.Unit, []extensionsv1alpha1.File, *extensionsv1alpha1.InPlaceUpdatesStatus, error) {
+	var (
+		extensionUnits []extensionsv1alpha1.Unit
+		extensionFiles []extensionsv1alpha1.File
+		inPlaceUpdates *extensionsv1alpha1.InPlaceUpdatesStatus
+	)
+
+	extensionUnits = []extensionsv1alpha1.Unit{
 		{
 			Name: "containerd.service",
 			DropIns: []extensionsv1alpha1.DropIn{
@@ -150,5 +168,26 @@ LimitNOFILE=1048576`,
 		},
 	}
 
-	return extensionUnits, nil, nil
+	if osc.Spec.InPlaceUpdates != nil {
+		filePathOSUpdateScript := filepath.Join(gardenlinux.ScriptLocation, "inplace-update.sh")
+		extensionFiles = append(extensionFiles, extensionsv1alpha1.File{
+			Path: filePathOSUpdateScript,
+			Content: extensionsv1alpha1.FileContent{
+				Inline: &extensionsv1alpha1.FileContentInline{
+					Data:     utils.EncodeBase64(scriptContentInPlaceUpdate),
+					Encoding: "b64",
+				},
+			},
+			Permissions: &gardenlinux.ScriptPermissions,
+		})
+
+		inPlaceUpdates = &extensionsv1alpha1.InPlaceUpdatesStatus{
+			OSUpdate: &extensionsv1alpha1.OSUpdate{
+				Command: filePathOSUpdateScript,
+				Args:    []string{osc.Spec.InPlaceUpdates.OperatingSystemVersion},
+			},
+		}
+	}
+
+	return extensionUnits, extensionFiles, inPlaceUpdates, nil
 }
