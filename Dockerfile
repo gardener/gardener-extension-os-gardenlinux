@@ -1,5 +1,5 @@
 ############# builder
-FROM golang:1.23.3 AS builder
+FROM golang:1.23.4 AS builder
 
 WORKDIR /go/src/github.com/gardener/gardener-extension-os-gardenlinux
 # cache deps before building and copying source so that we don't need to re-download as much
