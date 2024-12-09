@@ -6,92 +6,83 @@ metadata:
   labels:
     app.kubernetes.io/name: gardener-extension-os-gardenlinux
     helm.sh/chart: gardener-extension-os-gardenlinux
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/instance: { { .Release.Name } }
 rules:
-- apiGroups:
-  - extensions.gardener.cloud
-  resources:
-  - clusters
-  - operatingsystemconfigs
-  - operatingsystemconfigs/status
-  - operatingsystemconfigs/finalizers
-  verbs:
-  - get
-  - list
-  - watch
-  - patch
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  - secrets/finalizers
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-- apiGroups:
-  - ""
-  resources:
-  - namespaces
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - create
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  resourceNames:
-  - gardenlinux-leader-election
-  verbs:
-  - get
-  - watch
-  - update
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
-  - create 
-  - list 
-  - watch 
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  resourceNames:
-  - gardenlinux-leader-election
-  - gardener-extension-heartbeat 
-  verbs:
-  - get
-  - update
-- apiGroups:
-  - admissionregistration.k8s.io
-  resources:
-  - mutatingwebhookconfigurations
-  verbs:
-  - get
-  - list
-  - watch
-  - update
-  - create
-  - patch
+  - apiGroups:
+      - extensions.gardener.cloud
+    resources:
+      - clusters
+      - operatingsystemconfigs
+      - operatingsystemconfigs/status
+      - operatingsystemconfigs/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+      - patch
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+      - secrets/finalizers
+    verbs:
+      - "*"
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    resourceNames:
+      - gardenlinux-leader-election
+    verbs:
+      - get
+      - watch
+      - update
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+      - list
+      - watch
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    resourceNames:
+      - gardenlinux-leader-election
+      - gardener-extension-heartbeat
+    verbs:
+      - get
+      - update
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - mutatingwebhookconfigurations
+    verbs:
+      - "*"
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -100,12 +91,12 @@ metadata:
   labels:
     app.kubernetes.io/name: gardener-extension-os-gardenlinux
     helm.sh/chart: gardener-extension-os-gardenlinux
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/instance: { { .Release.Name } }
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: gardener-extension-os-gardenlinux
 subjects:
-- kind: ServiceAccount
-  name: gardener-extension-os-gardenlinux
-  namespace: {{ .Release.Namespace }}
+  - kind: ServiceAccount
+    name: gardener-extension-os-gardenlinux
+    namespace: { { .Release.Namespace } }
