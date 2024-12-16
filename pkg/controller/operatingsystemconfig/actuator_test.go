@@ -84,7 +84,6 @@ nslookup $(hostname) || systemctl restart systemd-networkd
 
 systemctl daemon-reload
 systemctl enable containerd && systemctl restart containerd
-systemctl enable docker && systemctl restart docker
 systemctl enable 'some-unit' && systemctl restart --no-block 'some-unit'
 `
 
