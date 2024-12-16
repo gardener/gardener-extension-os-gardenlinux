@@ -89,7 +89,6 @@ nslookup $(hostname) || systemctl restart systemd-networkd
 
 systemctl daemon-reload
 systemctl enable containerd && systemctl restart containerd
-systemctl enable docker && systemctl restart docker
 `
 	for _, unit := range osc.Spec.Units {
 		script += fmt.Sprintf(`systemctl enable '%s' && systemctl restart --no-block '%s'
