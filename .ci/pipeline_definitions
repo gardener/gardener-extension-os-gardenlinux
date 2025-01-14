@@ -60,6 +60,16 @@ gardener-extension-os-gardenlinux:
           nextversion: 'bump_minor'
           next_version_callback: '.ci/prepare_release'
           release_callback: '.ci/prepare_release'
+          assets:
+          - type: build-step-log
+            step_name: verify
+            purposes:
+            - lint
+            - sast
+            - gosec
+            comment: |
+              We use gosec (linter) for SAST scans, see: https://github.com/securego/gosec.
+              Enabled by https://github.com/gardener/gardener-extension-os-gardenlinux/pull/212
         slack:
           default_channel: 'internal_scp_workspace'
           channel_cfgs:
