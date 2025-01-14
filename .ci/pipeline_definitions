@@ -28,6 +28,8 @@ gardener-extension-os-gardenlinux:
               value:
               - type: 'githubUser'
                 username: 'MrBatschner'
+              - type: 'githubUser'
+                username: 'Roncossek'
   jobs:
     head-update:
       traits:
