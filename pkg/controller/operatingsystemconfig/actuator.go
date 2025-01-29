@@ -83,6 +83,9 @@ systemctl enable docker && systemctl restart docker
 `, unit.Name, unit.Name)
 	}
 
+	// The provisioning script must run only once.
+	script = operatingsystemconfig.WrapProvisionOSCIntoOneshotScript(script)
+
 	if osc.Spec.Type == memoryone.OSTypeMemoryOneGardenLinux {
 		return wrapIntoMemoryOneHeaderAndFooter(osc, script)
 	}
