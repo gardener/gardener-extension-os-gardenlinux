@@ -54,6 +54,11 @@ var _ = Describe("Actuator", func() {
 
 	When("purpose is 'provision'", func() {
 		expectedUserData := `#!/bin/bash
+if [ -f "/var/lib/osc/provision-osc-applied" ]; then
+  echo "Provision OSC already applied, exiting..."
+  exit 0
+fi
+
 
 mkdir -p "/some"
 
@@ -73,6 +78,10 @@ systemctl daemon-reload
 systemctl enable containerd && systemctl restart containerd
 systemctl enable docker && systemctl restart docker
 systemctl enable 'some-unit' && systemctl restart --no-block 'some-unit'
+
+
+mkdir -p /var/lib/osc
+touch /var/lib/osc/provision-osc-applied
 `
 
 		When("OS type is 'gardenlinux'", func() {
