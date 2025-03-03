@@ -29,18 +29,18 @@ func NewActuator(mgr manager.Manager) operatingsystemconfig.Actuator {
 	}
 }
 
-func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, osc *extensionsv1alpha1.OperatingSystemConfig) ([]byte, []extensionsv1alpha1.Unit, []extensionsv1alpha1.File, error) {
+func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, osc *extensionsv1alpha1.OperatingSystemConfig) ([]byte, []extensionsv1alpha1.Unit, []extensionsv1alpha1.File, *extensionsv1alpha1.InPlaceUpdatesStatus, error) {
 	switch purpose := osc.Spec.Purpose; purpose {
 	case extensionsv1alpha1.OperatingSystemConfigPurposeProvision:
 		userData, err := a.handleProvisionOSC(ctx, osc)
-		return []byte(userData), nil, nil, err
+		return []byte(userData), nil, nil, nil, err
 
 	case extensionsv1alpha1.OperatingSystemConfigPurposeReconcile:
 		extensionUnits, extensionFiles, err := a.handleReconcileOSC(osc)
-		return nil, extensionUnits, extensionFiles, err
+		return nil, extensionUnits, extensionFiles, nil, err
 
 	default:
-		return nil, nil, nil, fmt.Errorf("unknown purpose: %s", purpose)
+		return nil, nil, nil, nil, fmt.Errorf("unknown purpose: %s", purpose)
 	}
 }
 
@@ -56,7 +56,7 @@ func (a *actuator) ForceDelete(ctx context.Context, log logr.Logger, osc *extens
 	return a.Delete(ctx, log, osc)
 }
 
-func (a *actuator) Restore(ctx context.Context, log logr.Logger, osc *extensionsv1alpha1.OperatingSystemConfig) ([]byte, []extensionsv1alpha1.Unit, []extensionsv1alpha1.File, error) {
+func (a *actuator) Restore(ctx context.Context, log logr.Logger, osc *extensionsv1alpha1.OperatingSystemConfig) ([]byte, []extensionsv1alpha1.Unit, []extensionsv1alpha1.File, *extensionsv1alpha1.InPlaceUpdatesStatus, error) {
 	return a.Reconcile(ctx, log, osc)
 }
 
