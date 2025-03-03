@@ -99,12 +99,13 @@ touch /var/lib/osc/provision-osc-applied
 		When("OS type is 'gardenlinux'", func() {
 			Describe("#Reconcile", func() {
 				It("should not return an error", func() {
-					userData, extensionUnits, extensionFiles, err := actuator.Reconcile(ctx, log, osc)
+					userData, extensionUnits, extensionFiles, inplaceUpdateStatus, err := actuator.Reconcile(ctx, log, osc)
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(string(userData)).To(Equal(expectedUserData))
 					Expect(extensionUnits).To(BeEmpty())
 					Expect(extensionFiles).To(BeEmpty())
+					Expect(inplaceUpdateStatus).To(BeNil())
 				})
 			})
 		})
@@ -120,7 +121,7 @@ systemMemory: "6x"`)}
 
 			Describe("#Reconcile", func() {
 				It("should not return an error", func() {
-					userData, extensionUnits, extensionFiles, err := actuator.Reconcile(ctx, log, osc)
+					userData, extensionUnits, extensionFiles, inplaceUpdateStatus, err := actuator.Reconcile(ctx, log, osc)
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(string(userData)).To(Equal(`Content-Type: multipart/mixed; boundary="==BOUNDARY=="
@@ -135,6 +136,7 @@ Content-Type: text/x-shellscript
 --==BOUNDARY==`))
 					Expect(extensionUnits).To(BeEmpty())
 					Expect(extensionFiles).To(BeEmpty())
+					Expect(inplaceUpdateStatus).To(BeNil())
 				})
 			})
 		})
@@ -147,13 +149,13 @@ Content-Type: text/x-shellscript
 
 		Describe("#Reconcile", func() {
 			It("should not return usersdata for purpose reconcile", func() {
-				userData, _, _, err := actuator.Reconcile(ctx, log, osc)
+				userData, _, _, _, err := actuator.Reconcile(ctx, log, osc)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(userData).To(BeEmpty())
 			})
 
 			It("should add one empty additional unit for containerd", func() {
-				_, units, files, err := actuator.Reconcile(ctx, log, osc)
+				_, units, files, _, err := actuator.Reconcile(ctx, log, osc)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(units)).To(Equal(1))
 				Expect(units).To(ContainElement(
