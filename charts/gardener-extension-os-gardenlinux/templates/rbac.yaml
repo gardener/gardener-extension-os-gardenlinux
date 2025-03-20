@@ -29,12 +29,10 @@ rules:
   verbs:
   - create
   - delete
-  - deletecollection
   - get
   - list
   - patch
   - update
-  - watch
 - apiGroups:
   - ""
   resources:
@@ -90,7 +88,6 @@ rules:
   verbs:
   - create
   - delete
-  - deletecollection
   - get
   - list
   - patch
