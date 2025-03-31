@@ -27,7 +27,12 @@ rules:
   - secrets
   - secrets/finalizers
   verbs:
-  - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
 - apiGroups:
   - ""
   resources:
@@ -81,7 +86,13 @@ rules:
   resources:
   - mutatingwebhookconfigurations
   verbs:
-  - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
