@@ -64,7 +64,6 @@ status:
       namespace: default
   command: /usr/bin/env bash <path>
   units:
-  - docker-monitor.service
   - kubelet-monitor.service
   - kubelet.service
 ```
