@@ -59,18 +59,19 @@ rules:
   resources:
   - leases
   verbs:
-  - create 
-  - list 
-  - watch 
+  - create
+  - list
+  - watch
 - apiGroups:
   - coordination.k8s.io
   resources:
   - leases
   resourceNames:
   - gardenlinux-leader-election
-  - gardener-extension-heartbeat 
+  - gardener-extension-heartbeat
   verbs:
   - get
+  - patch
   - update
 - apiGroups:
   - admissionregistration.k8s.io
