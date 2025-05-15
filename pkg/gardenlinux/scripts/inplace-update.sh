@@ -8,8 +8,14 @@ if [ "$#" -ne 1 ]; then
 fi
 
 VERSION=$1
+flags=()
 
-if gardenlinux-update "$VERSION"; then
+if [[ -f /etc/gardenlinux/usirepo.conf ]]; then
+    REPO=$(< /etc/gardenlinux/usirepo.conf)
+    flags=(--repo "$REPO")
+fi
+
+if gardenlinux-update "${flags[@]}" "$VERSION"; then
     echo "exit status 0: success"
     reboot
 else
