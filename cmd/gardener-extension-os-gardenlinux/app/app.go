@@ -130,7 +130,7 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 				return fmt.Errorf("could not add controller to manager: %w", err)
 			}
 
-			if _, err := webhookOpts.Completed().AddToManager(ctx, mgr, nil); err != nil {
+			if _, err := webhookOpts.Completed().AddToManager(ctx, mgr, nil, false); err != nil {
 				return fmt.Errorf("could not add the mutating webhook to manager: %w", err)
 			}
 
