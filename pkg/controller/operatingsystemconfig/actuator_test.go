@@ -154,6 +154,24 @@ Content-Type: text/x-shellscript
 				Expect(userData).To(BeEmpty())
 			})
 
+			Context("In-Place Updates", func() {
+				It("should return InPlaceUpdatesStatus", func() {
+					osc.Spec.InPlaceUpdates = &extensionsv1alpha1.InPlaceUpdates{
+						OperatingSystemVersion: "1.0.0-inplace",
+					}
+
+					_, _, _, inplaceUpdateStatus, err := actuator.Reconcile(ctx, log, osc)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(inplaceUpdateStatus).To(Equal(&extensionsv1alpha1.InPlaceUpdatesStatus{
+						OSUpdate: &extensionsv1alpha1.OSUpdate{
+							Command: "/opt/gardener/bin/inplace-update.sh",
+							Args:    []string{"1.0.0"},
+						},
+					}))
+				})
+			})
+
 			It("should add one empty additional unit for containerd", func() {
 				_, units, files, _, err := actuator.Reconcile(ctx, log, osc)
 				Expect(err).NotTo(HaveOccurred())
