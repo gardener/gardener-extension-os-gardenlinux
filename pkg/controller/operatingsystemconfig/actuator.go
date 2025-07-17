@@ -13,6 +13,7 @@ import (
 	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils"
+	versionutils "github.com/gardener/gardener/pkg/utils/version"
 	"github.com/go-logr/logr"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -184,7 +185,7 @@ LimitNOFILE=1048576`,
 		inPlaceUpdates = &extensionsv1alpha1.InPlaceUpdatesStatus{
 			OSUpdate: &extensionsv1alpha1.OSUpdate{
 				Command: filePathOSUpdateScript,
-				Args:    []string{osc.Spec.InPlaceUpdates.OperatingSystemVersion},
+				Args:    []string{versionutils.Normalize(osc.Spec.InPlaceUpdates.OperatingSystemVersion)},
 			},
 		}
 	}
