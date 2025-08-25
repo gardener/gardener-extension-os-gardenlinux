@@ -1,0 +1,13 @@
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  name: os-gardenlinux
+spec:
+  deployment:
+    extension:
+      helm:
+        ociRepository:
+          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/os-gardenlinux:v0.33.0-dev
+  resources:
+  - kind: OperatingSystemConfig
+    type: gardenlinux
