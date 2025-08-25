@@ -1,6 +1,6 @@
 # [Gardener Extension for Garden Linux OS](https://gardener.cloud)
 [![REUSE status](https://api.reuse.software/badge/github.com/gardener/gardener-extension-os-gardenlinux)](https://api.reuse.software/info/github.com/gardener/gardener-extension-os-gardenlinux)
-[![Build status](https://github.com/gardener/gardener-extension-os-gardenlinux/actions/workflows/non-release.yaml/badge.svg?branch=master)](https://github.com/gardener/gardener-extension-os-gardenlinux/actions/workflows/non-release.yaml)
+[![Build status](https://github.com/gardener/gardener-extension-os-gardenlinux/actions/workflows/dev_build/badge.svg?branch=master)](https://github.com/gardener/gardener-extension-os-gardenlinux/actions/workflows/dev_build)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gardener/gardener-extension-os-gardenlinux)](https://goreportcard.com/report/github.com/gardener/gardener-extension-os-gardenlinux)
 
 This controller operates on the [`OperatingSystemConfig`](https://github.com/gardener/gardener/blob/master/docs/proposals/01-extensibility.md#cloud-config-user-data-for-bootstrapping-machines) resource in the `extensions.gardener.cloud/v1alpha1` API group. 
