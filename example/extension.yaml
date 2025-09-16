@@ -9,7 +9,7 @@ spec:
     extension:
       helm:
         ociRepository:
-          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/os-gardenlinux:v0.33.0-dev
+          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/os-gardenlinux:v0.33.0
   resources:
   - kind: OperatingSystemConfig
     type: gardenlinux
