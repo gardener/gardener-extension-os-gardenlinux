@@ -1,0 +1,6 @@
+# See the OWNERS docs at https://go.k8s.io/owners
+
+reviewers:
+- gardener-extension-os-gardenlinux-reviewers
+approvers:
+- gardener-extension-os-gardenlinux-approvers

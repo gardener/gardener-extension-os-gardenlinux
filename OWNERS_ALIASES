@@ -1,0 +1,11 @@
+# See the OWNERS docs at https://go.k8s.io/owners
+
+aliases:
+  gardener-extension-os-gardenlinux-reviewers:
+  - MrBatschner
+  - Roncossek
+  - Vincinator
+  gardener-extension-os-gardenlinux-approvers:
+  - MrBatschner
+  - Roncossek
+  - Vincinator
