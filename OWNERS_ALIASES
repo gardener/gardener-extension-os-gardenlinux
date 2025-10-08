@@ -2,12 +2,10 @@
 
 aliases:
   gardener-extension-os-gardenlinux-reviewers:
-  - marwinski
   - MrBatschner
   - Roncossek
   - Vincinator
   gardener-extension-os-gardenlinux-approvers:
-  - marwinski
   - MrBatschner
   - Roncossek
   - Vincinator
