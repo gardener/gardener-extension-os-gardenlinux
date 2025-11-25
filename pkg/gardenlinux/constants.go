@@ -21,4 +21,7 @@ const (
 
 	// OSTypeGardenLinux is a constant for the Garden Linux extension OS type.
 	OSTypeGardenLinux = "gardenlinux"
+
+	// OSTypeGardenLinux is a constant for the FIPS-enabled Garden Linux extension OS type.
+	OSTypeGardenLinuxFips = "gardenlinux-fips"
 )

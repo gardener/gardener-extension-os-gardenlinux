@@ -10,10 +10,8 @@ import (
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/component/extensions/operatingsystemconfig/original/components/kubelet"
 	oscutils "github.com/gardener/gardener/pkg/component/extensions/operatingsystemconfig/utils"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/gardenlinux"
@@ -47,7 +45,7 @@ func AddToManager(mgr manager.Manager) (*extensionswebhook.Webhook, error) {
 		{Obj: &extensionsv1alpha1.OperatingSystemConfig{}},
 	}
 
-	handler, err := extensionswebhook.NewBuilder(mgr, logger).WithPredicates(isGardenLinuxOsc()).WithMutator(mutator, objTypes...).Build()
+	handler, err := extensionswebhook.NewBuilder(mgr, logger).WithPredicates(gardenlinux.PredicateGardenLinuxOsc()).WithMutator(mutator, objTypes...).Build()
 	if err != nil {
 		return nil, err
 	}
@@ -63,15 +61,4 @@ func AddToManager(mgr manager.Manager) (*extensionswebhook.Webhook, error) {
 	}
 
 	return webhook, nil
-}
-
-// isGardenLinuxOsc returns a predicate that filters OperatingSystemConfigs just for Garden Linux
-func isGardenLinuxOsc() predicate.Predicate {
-	return predicate.NewPredicateFuncs(func(obj client.Object) bool {
-		osc, ok := obj.(*extensionsv1alpha1.OperatingSystemConfig)
-		if !ok {
-			return false
-		}
-		return osc.Spec.Type == gardenlinux.OSTypeGardenLinux
-	})
 }

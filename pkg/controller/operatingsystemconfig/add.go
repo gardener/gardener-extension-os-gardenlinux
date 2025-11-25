@@ -32,7 +32,7 @@ func AddToManagerWithOptions(ctx context.Context, mgr manager.Manager, opts AddO
 	return operatingsystemconfig.Add(mgr, operatingsystemconfig.AddArgs{
 		Actuator:          NewActuator(mgr),
 		Predicates:        operatingsystemconfig.DefaultPredicates(ctx, mgr, opts.IgnoreOperationAnnotation),
-		Types:             []string{gardenlinux.OSTypeGardenLinux, memoryone.OSTypeMemoryOneGardenLinux},
+		Types:             []string{gardenlinux.OSTypeGardenLinux, gardenlinux.OSTypeGardenLinuxFips, memoryone.OSTypeMemoryOneGardenLinux},
 		ControllerOptions: opts.Controller,
 	})
 }

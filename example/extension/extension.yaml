@@ -9,4 +9,6 @@ spec:
   - kind: OperatingSystemConfig
     type: gardenlinux
   - kind: OperatingSystemConfig
+    type: gardenlinux-fips
+  - kind: OperatingSystemConfig
     type: memoryone-gardenlinux
