@@ -95,20 +95,21 @@ systemctl enable 'some-unit' && systemctl restart --no-block 'some-unit'
 mkdir -p /var/lib/osc
 touch /var/lib/osc/provision-osc-applied
 `
+		DescribeTableSubtree("OSC type is ", func(osctype string) {
+			It("should not return an error", func() {
+				osc.Spec.Type = osctype
+				userData, extensionUnits, extensionFiles, inplaceUpdateStatus, err := actuator.Reconcile(ctx, log, osc)
+				Expect(err).NotTo(HaveOccurred())
 
-		When("OS type is 'gardenlinux'", func() {
-			Describe("#Reconcile", func() {
-				It("should not return an error", func() {
-					userData, extensionUnits, extensionFiles, inplaceUpdateStatus, err := actuator.Reconcile(ctx, log, osc)
-					Expect(err).NotTo(HaveOccurred())
-
-					Expect(string(userData)).To(Equal(expectedUserData))
-					Expect(extensionUnits).To(BeEmpty())
-					Expect(extensionFiles).To(BeEmpty())
-					Expect(inplaceUpdateStatus).To(BeNil())
-				})
+				Expect(string(userData)).To(Equal(expectedUserData))
+				Expect(extensionUnits).To(BeEmpty())
+				Expect(extensionFiles).To(BeEmpty())
+				Expect(inplaceUpdateStatus).To(BeNil())
 			})
-		})
+		},
+			Entry("gardenlinux", "gardenlinux"),
+			Entry("gardenlinux-fips", "gardenlinux-fips"),
+		)
 
 		When("OS type is 'memoryone-gardenlinux'", func() {
 			BeforeEach(func() {
