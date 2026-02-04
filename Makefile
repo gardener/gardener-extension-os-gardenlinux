@@ -89,6 +89,14 @@ generate: $(VGOPATH) $(CONTROLLER_GEN) $(EXTENSION_GEN) $(GEN_CRD_API_REFERENCE_
 	@REPO_ROOT=$(REPO_ROOT) VGOPATH=$(VGOPATH) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(GARDENER_HACK_DIR)/generate-sequential.sh ./charts/... ./cmd/... ./example/... ./pkg/...
 	$(MAKE) format
 
+.PHONY: add-license-headers
+add-license-headers: $(GO_ADD_LICENSE)
+	@REPO_ROOT=$(REPO_ROOT) bash $(GARDENER_HACK_DIR)/add-license-header.sh
+
+.PHONY: check-license-headers
+check-license-headers: $(GO_ADD_LICENSE)
+	@REPO_ROOT=$(REPO_ROOT) bash $(GARDENER_HACK_DIR)/check-license-header.sh
+
 .PHONY: sast
 sast: $(GOSEC)
 	@./hack/sast.sh
@@ -114,7 +122,7 @@ test-clean:
 	@bash $(GARDENER_HACK_DIR)/test-cover-clean.sh
 
 .PHONY: verify
-verify: check format sast test
+verify: check format sast test check-license-headers
 
 .PHONY: verify-extended
-verify-extended: check-generate check format sast-report test-cov test-clean
+verify-extended: check-generate check format sast-report test-cov test-clean check-license-headers
