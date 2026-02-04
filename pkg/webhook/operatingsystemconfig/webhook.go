@@ -51,7 +51,7 @@ func AddToManager(mgr manager.Manager) (*extensionswebhook.Webhook, error) {
 	}
 
 	webhook := &extensionswebhook.Webhook{
-		Name:     extensionswebhook.PrefixedName(WebhookName),
+		Name:     extensionswebhook.PrefixedName(WebhookName, false),
 		Provider: "",
 		Action:   extensionswebhook.ActionMutating,
 		Path:     WebhookPath,

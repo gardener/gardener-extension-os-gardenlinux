@@ -69,6 +69,7 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 			"os-gardenlinux",
 			"",
 			nil,
+			nil,
 			webhookServerOpts,
 			webhookSwitches,
 		)
@@ -124,13 +125,13 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 			ctrlOpts.Completed().Apply(&operatingsystemconfig.DefaultAddOptions.Controller)
 			heartbeatCtrlOpts.Completed().Apply(&heartbeat.DefaultAddOptions)
 
-			reconcileOpts.Completed().Apply(&operatingsystemconfig.DefaultAddOptions.IgnoreOperationAnnotation, ptr.To(extensionsv1alpha1.ExtensionClassShoot))
+			reconcileOpts.Completed().Apply(&operatingsystemconfig.DefaultAddOptions.IgnoreOperationAnnotation, ptr.To([]extensionsv1alpha1.ExtensionClass{extensionsv1alpha1.ExtensionClassShoot}))
 
 			if err := controllerSwitches.Completed().AddToManager(ctx, mgr); err != nil {
 				return fmt.Errorf("could not add controller to manager: %w", err)
 			}
 
-			if _, err := webhookOpts.Completed().AddToManager(ctx, mgr, nil, false); err != nil {
+			if _, err := webhookOpts.Completed().AddToManager(ctx, mgr, nil); err != nil {
 				return fmt.Errorf("could not add the mutating webhook to manager: %w", err)
 			}
 
