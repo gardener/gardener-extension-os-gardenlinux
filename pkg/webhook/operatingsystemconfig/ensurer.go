@@ -29,6 +29,7 @@ func NewEnsurer(mgr manager.Manager, logger logr.Logger) genericmutator.Ensurer 
 
 type ensurer struct {
 	genericmutator.NoopEnsurer
+
 	client client.Client
 	logger logr.Logger
 }
@@ -38,13 +39,13 @@ const (
 )
 
 // EnsureKubeletConfiguration ensures that the kubelet configuration conforms to the desired specification
-func (e *ensurer) EnsureKubeletConfiguration(ctx context.Context, gctx extensionscontextwebhook.GardenContext, _ *semver.Version, new, _ *kubeletconfigv1beta1.KubeletConfiguration) error {
+func (e *ensurer) EnsureKubeletConfiguration(_ context.Context, _ extensionscontextwebhook.GardenContext, _ *semver.Version, new, _ *kubeletconfigv1beta1.KubeletConfiguration) error {
 	e.logger.Info("Ensuring Kubelet cgroup driver")
 	return ensureKubeletUsesSystemdCgroupDriver(new)
 }
 
 // EnsureContainerdConfig ensures the CRI config.
-func (e *ensurer) EnsureCRIConfig(ctx context.Context, gctx extensionscontextwebhook.GardenContext, new, _ *extensionsv1alpha1.CRIConfig) error {
+func (e *ensurer) EnsureCRIConfig(_ context.Context, _ extensionscontextwebhook.GardenContext, new, _ *extensionsv1alpha1.CRIConfig) error {
 	e.logger.Info("Ensuring containerd cgroup driver")
 	return ensureContainerdUsesSystemdCgroupDriver(new)
 }

@@ -113,7 +113,7 @@ var _ = Describe("Mutator", func() {
 		BeforeEach(func() {
 			kubeletConfig := kubeletConfigTemplate.DeepCopy()
 			files, err := filesWithKkubletConfig(kubeletConfig)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			osc = *oscTemplate.DeepCopy()
 			osc.Spec.Files = files
@@ -125,10 +125,10 @@ var _ = Describe("Mutator", func() {
 			Expect(mutator.Mutate(ctx, &osc, nil)).To(Succeed())
 
 			mutatedKubeletConfig, err := extractKubeletConfigCgroupDriver(osc.Spec.Files)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			Expect(mutatedKubeletConfig.CgroupDriver).NotTo(Equal(operatingsystemconfig.KubeletCgroupDriverSystemd))
-			Expect(osc.Spec.CRIConfig.CgroupDriver).NotTo(Equal(extensionsv1alpha1.CgroupDriverSystemd))
+			Expect(*osc.Spec.CRIConfig.CgroupDriver).NotTo(Equal(extensionsv1alpha1.CgroupDriverSystemd))
 		})
 	})
 })
