@@ -89,7 +89,7 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "os-" + ctrlName + "-controller-manager",
 
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			if err := aggOption.Complete(); err != nil {
 				return fmt.Errorf("error completing options: %w", err)
 			}

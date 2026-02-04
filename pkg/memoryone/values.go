@@ -36,7 +36,7 @@ func Configuration(osc *extensionsv1alpha1.OperatingSystemConfig) (*memoryonegar
 	return obj, nil
 }
 
-func MemoryOneValues(osc *extensionsv1alpha1.OperatingSystemConfig, values map[string]interface{}) error {
+func Values(osc *extensionsv1alpha1.OperatingSystemConfig, values map[string]any) error {
 	if osc.Spec.Type == OSTypeMemoryOneGardenLinux {
 		config, err := Configuration(osc)
 		if err != nil {

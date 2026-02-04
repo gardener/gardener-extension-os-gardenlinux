@@ -176,7 +176,7 @@ Content-Type: text/x-shellscript
 			It("should add one empty additional unit for containerd", func() {
 				_, units, files, _, err := actuator.Reconcile(ctx, log, osc)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(len(units)).To(Equal(1))
+				Expect(units).To(HaveLen(1))
 				Expect(units).To(ContainElement(
 					extensionsv1alpha1.Unit{
 						Name: "containerd.service",

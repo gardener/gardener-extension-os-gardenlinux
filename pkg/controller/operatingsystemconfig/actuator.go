@@ -34,15 +34,15 @@ func NewActuator(mgr manager.Manager) operatingsystemconfig.Actuator {
 	}
 }
 
-func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, osc *extensionsv1alpha1.OperatingSystemConfig) ([]byte, []extensionsv1alpha1.Unit, []extensionsv1alpha1.File, *extensionsv1alpha1.InPlaceUpdatesStatus, error) {
+func (a *actuator) Reconcile(ctx context.Context, _ logr.Logger, osc *extensionsv1alpha1.OperatingSystemConfig) ([]byte, []extensionsv1alpha1.Unit, []extensionsv1alpha1.File, *extensionsv1alpha1.InPlaceUpdatesStatus, error) {
 	switch purpose := osc.Spec.Purpose; purpose {
 	case extensionsv1alpha1.OperatingSystemConfigPurposeProvision:
 		userData, err := a.handleProvisionOSC(ctx, osc)
 		return []byte(userData), nil, nil, nil, err
 
 	case extensionsv1alpha1.OperatingSystemConfigPurposeReconcile:
-		extensionUnits, extensionFiles, inPlaceUpdates, err := a.handleReconcileOSC(osc)
-		return nil, extensionUnits, extensionFiles, inPlaceUpdates, err
+		extensionUnits, extensionFiles, inPlaceUpdates := a.handleReconcileOSC(osc)
+		return nil, extensionUnits, extensionFiles, inPlaceUpdates, nil
 
 	default:
 		return nil, nil, nil, nil, fmt.Errorf("unknown purpose: %s", purpose)
@@ -148,7 +148,7 @@ func init() {
 	utilruntime.Must(err)
 }
 
-func (a *actuator) handleReconcileOSC(osc *extensionsv1alpha1.OperatingSystemConfig) ([]extensionsv1alpha1.Unit, []extensionsv1alpha1.File, *extensionsv1alpha1.InPlaceUpdatesStatus, error) {
+func (a *actuator) handleReconcileOSC(osc *extensionsv1alpha1.OperatingSystemConfig) ([]extensionsv1alpha1.Unit, []extensionsv1alpha1.File, *extensionsv1alpha1.InPlaceUpdatesStatus) {
 	var (
 		extensionUnits []extensionsv1alpha1.Unit
 		extensionFiles []extensionsv1alpha1.File
@@ -190,5 +190,5 @@ LimitNOFILE=1048576`,
 		}
 	}
 
-	return extensionUnits, extensionFiles, inPlaceUpdates, nil
+	return extensionUnits, extensionFiles, inPlaceUpdates
 }
