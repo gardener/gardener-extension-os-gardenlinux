@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	extcontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	controllercmd "github.com/gardener/gardener/extensions/pkg/controller/cmd"
@@ -123,6 +124,9 @@ func NewControllerCommand(ctx context.Context) *cobra.Command {
 			}
 
 			ctrlOpts.Completed().Apply(&operatingsystemconfig.DefaultAddOptions.Controller)
+			// Todo: The cache sync timeout is set to 5 minutes to prevent the controller from crashing due to reported timeouts on 19.03.2026. This should be removed once the underlying issue is resolved.
+			operatingsystemconfig.DefaultAddOptions.Controller.CacheSyncTimeout = 5 * time.Minute
+
 			heartbeatCtrlOpts.Completed().Apply(&heartbeat.DefaultAddOptions)
 
 			reconcileOpts.Completed().Apply(&operatingsystemconfig.DefaultAddOptions.IgnoreOperationAnnotation, ptr.To([]extensionsv1alpha1.ExtensionClass{extensionsv1alpha1.ExtensionClassShoot}))
