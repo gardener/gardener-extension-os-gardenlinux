@@ -7,6 +7,7 @@ package operatingsystemconfig
 import (
 	"context"
 
+	extensionspredicate "github.com/gardener/gardener/extensions/pkg/predicate"
 	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -28,10 +29,10 @@ type AddOptions struct {
 
 // AddToManagerWithOptions adds a controller with the given Options to the given manager.
 // The opts.Reconciler is being set with a newly instantiated actuator.
-func AddToManagerWithOptions(ctx context.Context, mgr manager.Manager, opts AddOptions) error {
+func AddToManagerWithOptions(_ context.Context, mgr manager.Manager, opts AddOptions) error {
 	return operatingsystemconfig.Add(mgr, operatingsystemconfig.AddArgs{
 		Actuator:          NewActuator(mgr),
-		Predicates:        operatingsystemconfig.DefaultPredicates(ctx, mgr, opts.IgnoreOperationAnnotation),
+		Predicates:        extensionspredicate.DefaultControllerPredicates(opts.IgnoreOperationAnnotation),
 		Types:             []string{gardenlinux.OSTypeGardenLinux, gardenlinux.OSTypeGardenLinuxFips, memoryone.OSTypeMemoryOneGardenLinux},
 		ControllerOptions: opts.Controller,
 	})
