@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig"
+	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -24,6 +25,8 @@ type AddOptions struct {
 	Controller controller.Options
 	// IgnoreOperationAnnotation specifies whether to ignore the operation annotation or not.
 	IgnoreOperationAnnotation bool
+	// ExtensionClasses defines the extension classes this controller is responsible for.
+	ExtensionClasses []extensionsv1alpha1.ExtensionClass
 }
 
 // AddToManagerWithOptions adds a controller with the given Options to the given manager.
@@ -34,6 +37,7 @@ func AddToManagerWithOptions(ctx context.Context, mgr manager.Manager, opts AddO
 		Predicates:        operatingsystemconfig.DefaultPredicates(ctx, mgr, opts.IgnoreOperationAnnotation),
 		Types:             []string{gardenlinux.OSTypeGardenLinux, gardenlinux.OSTypeGardenLinuxFips, memoryone.OSTypeMemoryOneGardenLinux},
 		ControllerOptions: opts.Controller,
+		ExtensionClasses:  opts.ExtensionClasses,
 	})
 }
 
