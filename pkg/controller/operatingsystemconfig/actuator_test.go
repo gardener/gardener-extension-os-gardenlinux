@@ -6,6 +6,8 @@ package operatingsystemconfig_test
 
 import (
 	"context"
+	"encoding/base64"
+	"strings"
 
 	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
@@ -156,11 +158,18 @@ Content-Type: text/x-shellscript
 			})
 
 			Context("In-Place Updates", func() {
-				It("should return InPlaceUpdatesStatus", func() {
+				BeforeEach(func() {
 					osc.Spec.InPlaceUpdates = &extensionsv1alpha1.InPlaceUpdates{
 						OperatingSystemVersion: "1.0.0-inplace",
 					}
+					osc.Spec.Units = []extensionsv1alpha1.Unit{
+						{Name: "gardener-node-agent.service", Content: ptr.To("[Unit]\nDescription=GNA")},
+						{Name: "kubelet.service", Content: ptr.To("[Unit]\nDescription=kubelet")},
+						{Name: "no-content.service"}, // units without content must be skipped
+					}
+				})
 
+				It("should return InPlaceUpdatesStatus with the OS update command", func() {
 					_, _, _, inplaceUpdateStatus, err := actuator.Reconcile(ctx, log, osc)
 					Expect(err).NotTo(HaveOccurred())
 
@@ -170,6 +179,74 @@ Content-Type: text/x-shellscript
 							Args:    []string{"1.0.0"},
 						},
 					}))
+				})
+
+				It("should deliver the inplace-update.sh script and the etc-setup hook file", func() {
+					_, _, files, _, err := actuator.Reconcile(ctx, log, osc)
+					Expect(err).NotTo(HaveOccurred())
+
+					paths := make([]string, 0, len(files))
+					for _, f := range files {
+						paths = append(paths, f.Path)
+					}
+					Expect(paths).To(ContainElements(
+						"/opt/gardener/bin/inplace-update.sh",
+						gardenlinux.PathEtcSetupHook,
+					))
+				})
+
+				It("should embed all unit contents with content in the hook script", func() {
+					_, _, files, _, err := actuator.Reconcile(ctx, log, osc)
+					Expect(err).NotTo(HaveOccurred())
+
+					var hookFile *extensionsv1alpha1.File
+					for i := range files {
+						if files[i].Path == gardenlinux.PathEtcSetupHook {
+							hookFile = &files[i]
+							break
+						}
+					}
+					Expect(hookFile).NotTo(BeNil())
+					Expect(hookFile.Content.Inline).NotTo(BeNil())
+					Expect(hookFile.Content.Inline.Encoding).To(Equal("b64"))
+
+					decoded, err := base64.StdEncoding.DecodeString(hookFile.Content.Inline.Data)
+					Expect(err).NotTo(HaveOccurred())
+
+					script := string(decoded)
+					Expect(script).To(ContainSubstring("#!/usr/bin/env bash"))
+					// Unit names appear verbatim in the script (as install targets and restart targets)
+					Expect(script).To(ContainSubstring("gardener-node-agent.service"))
+					Expect(script).To(ContainSubstring("kubelet.service"))
+					// Unit content is base64-encoded in the script to prevent heredoc injection
+					Expect(script).To(ContainSubstring(base64.StdEncoding.EncodeToString([]byte("[Unit]\nDescription=GNA"))))
+					Expect(script).To(ContainSubstring(base64.StdEncoding.EncodeToString([]byte("[Unit]\nDescription=kubelet"))))
+					// unit without content must not appear
+					Expect(strings.Count(script, "no-content.service")).To(Equal(0))
+					// containerd setup must be present
+					Expect(script).To(ContainSubstring("containerd config default"))
+					Expect(script).To(ContainSubstring("11-exec_config.conf"))
+					Expect(script).To(ContainSubstring("systemctl daemon-reload"))
+					// containerd drop-in with resource limits must be written by the hook
+					Expect(script).To(ContainSubstring("override.conf"))
+					Expect(script).To(ContainSubstring("LimitMEMLOCK=67108864"))
+					Expect(script).To(ContainSubstring("LimitNOFILE=1048576"))
+					// last-applied-osc.yaml must be removed so GNA re-applies all files after the wipe
+					Expect(script).To(ContainSubstring("rm -f /var/lib/gardener-node-agent/last-applied-osc.yaml"))
+				})
+
+				It("should set 0755 permissions on the hook file", func() {
+					_, _, files, _, err := actuator.Reconcile(ctx, log, osc)
+					Expect(err).NotTo(HaveOccurred())
+
+					for _, f := range files {
+						if f.Path == gardenlinux.PathEtcSetupHook {
+							Expect(f.Permissions).NotTo(BeNil())
+							Expect(*f.Permissions).To(Equal(uint32(0755)))
+							return
+						}
+					}
+					Fail("hook file not found in extension files")
 				})
 			})
 
