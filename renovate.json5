@@ -41,7 +41,7 @@
     {
       // Ignore paths which most likely create false positives.
       "matchFileNames": [
-        "chart/**",
+        "charts/**",
         "cmd/**",
         "pkg/**",
         "test/**",
