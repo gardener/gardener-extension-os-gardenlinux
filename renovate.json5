@@ -60,6 +60,8 @@
       enabled: false,
     },
   ],
+  // The following list of dependencies to ignore is updated by `make generate`.
+  // DO NOT EDIT THIS SECTION MANUALLY.
   ignoreDeps: [
     'github.com/Masterminds/semver/v3',
     'github.com/go-logr/logr',
