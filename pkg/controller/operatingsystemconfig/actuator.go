@@ -5,10 +5,13 @@
 package operatingsystemconfig
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
+	"encoding/base64"
 	"fmt"
 	"path/filepath"
+	"text/template"
 
 	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
@@ -41,7 +44,10 @@ func (a *actuator) Reconcile(ctx context.Context, _ logr.Logger, osc *extensions
 		return []byte(userData), nil, nil, nil, err
 
 	case extensionsv1alpha1.OperatingSystemConfigPurposeReconcile:
-		extensionUnits, extensionFiles, inPlaceUpdates := a.handleReconcileOSC(osc)
+		extensionUnits, extensionFiles, inPlaceUpdates, err := a.handleReconcileOSC(osc)
+		if err != nil {
+			return nil, nil, nil, nil, err
+		}
 		return nil, extensionUnits, extensionFiles, inPlaceUpdates, nil
 
 	default:
@@ -139,16 +145,54 @@ Content-Type: text/x-shellscript
 	return out, nil
 }
 
-var scriptContentInPlaceUpdate []byte
+var (
+	scriptContentInPlaceUpdate []byte
+	etcSetupHookTpl            *template.Template
+)
 
 func init() {
 	var err error
 
 	scriptContentInPlaceUpdate, err = gardenlinux.Templates.ReadFile(filepath.Join("scripts", "inplace-update.sh"))
 	utilruntime.Must(err)
+
+	hookTplContent, err := gardenlinux.Templates.ReadFile(filepath.Join("scripts", "etc-setup-hook.tpl.sh"))
+	utilruntime.Must(err)
+	etcSetupHookTpl = template.Must(template.New("etc-setup-hook").Parse(string(hookTplContent)))
 }
 
-func (a *actuator) handleReconcileOSC(osc *extensionsv1alpha1.OperatingSystemConfig) ([]extensionsv1alpha1.Unit, []extensionsv1alpha1.File, *extensionsv1alpha1.InPlaceUpdatesStatus) {
+// unitForHook holds just the fields the hook template needs.
+type unitForHook struct {
+	Name       string
+	ContentB64 string // base64-encoded unit content; decoded by the hook script via `base64 -d`
+}
+
+// etcSetupHookData is the typed template data passed to etcSetupHookTpl.
+// Using a named struct (instead of map[string]any) makes key-name mismatches a
+// compile-time error rather than a silent empty-output bug.
+type etcSetupHookData struct {
+	Units []unitForHook
+}
+
+func generateEtcSetupHookScript(oscUnits []extensionsv1alpha1.Unit) ([]byte, error) {
+	var units []unitForHook
+	for _, u := range oscUnits {
+		if u.Content != nil && *u.Content != "" {
+			units = append(units, unitForHook{
+				Name:       u.Name,
+				ContentB64: base64.StdEncoding.EncodeToString([]byte(*u.Content)),
+			})
+		}
+	}
+
+	var buf bytes.Buffer
+	if err := etcSetupHookTpl.Execute(&buf, etcSetupHookData{Units: units}); err != nil {
+		return nil, fmt.Errorf("failed rendering etc-setup hook script: %w", err)
+	}
+	return buf.Bytes(), nil
+}
+
+func (a *actuator) handleReconcileOSC(osc *extensionsv1alpha1.OperatingSystemConfig) ([]extensionsv1alpha1.Unit, []extensionsv1alpha1.File, *extensionsv1alpha1.InPlaceUpdatesStatus, error) {
 	var (
 		extensionUnits []extensionsv1alpha1.Unit
 		extensionFiles []extensionsv1alpha1.File
@@ -182,6 +226,21 @@ LimitNOFILE=1048576`,
 			Permissions: &gardenlinux.ScriptPermissions,
 		})
 
+		hookScript, err := generateEtcSetupHookScript(osc.Spec.Units)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		extensionFiles = append(extensionFiles, extensionsv1alpha1.File{
+			Path: gardenlinux.PathEtcSetupHook,
+			Content: extensionsv1alpha1.FileContent{
+				Inline: &extensionsv1alpha1.FileContentInline{
+					Data:     utils.EncodeBase64(hookScript),
+					Encoding: "b64",
+				},
+			},
+			Permissions: &gardenlinux.ScriptPermissions,
+		})
+
 		inPlaceUpdates = &extensionsv1alpha1.InPlaceUpdatesStatus{
 			OSUpdate: &extensionsv1alpha1.OSUpdate{
 				Command: filePathOSUpdateScript,
@@ -190,5 +249,5 @@ LimitNOFILE=1048576`,
 		}
 	}
 
-	return extensionUnits, extensionFiles, inPlaceUpdates
+	return extensionUnits, extensionFiles, inPlaceUpdates, nil
 }
