@@ -81,21 +81,7 @@ func (a *actuator) handleProvisionOSC(ctx context.Context, osc *extensionsv1alph
 	}
 	writeUnitsToDiskScript := operatingsystemconfig.UnitsToDiskScript(osc.Spec.Units)
 
-	script := `#!/bin/bash
-if [ ! -s /etc/containerd/config.toml ]; then
-  mkdir -p /etc/containerd/
-  containerd config default > /etc/containerd/config.toml
-  chmod 0644 /etc/containerd/config.toml
-fi
-
-mkdir -p /etc/systemd/system/containerd.service.d
-cat <<EOF > /etc/systemd/system/containerd.service.d/11-exec_config.conf
-[Service]
-ExecStart=
-ExecStart=/usr/bin/containerd --config=/etc/containerd/config.toml
-EOF
-chmod 0644 /etc/systemd/system/containerd.service.d/11-exec_config.conf
-` + writeFilesToDiskScript + `
+	script := "#!/bin/bash\n" + string(scriptContentContainerd) + writeFilesToDiskScript + `
 ` + writeUnitsToDiskScript + `
 grep -sq "^nfsd$" /etc/modules || echo "nfsd" >>/etc/modules
 modprobe nfsd
@@ -150,6 +136,7 @@ Content-Type: text/x-shellscript
 
 var (
 	scriptContentInPlaceUpdate []byte
+	scriptContentContainerd    []byte
 	etcSetupHookTpl            *template.Template
 )
 
@@ -157,6 +144,9 @@ func init() {
 	var err error
 
 	scriptContentInPlaceUpdate, err = gardenlinux.Templates.ReadFile(filepath.Join("scripts", "inplace-update.sh"))
+	utilruntime.Must(err)
+
+	scriptContentContainerd, err = gardenlinux.Templates.ReadFile(filepath.Join("scripts", "containerd-setup.sh"))
 	utilruntime.Must(err)
 
 	hookTplContent, err := gardenlinux.Templates.ReadFile(filepath.Join("scripts", "etc-setup-hook.tpl.sh"))
@@ -190,6 +180,8 @@ type etcSetupHookData struct {
 	// sources under /var (bound to gardener core's exported constant). The hook re-runs it after the /etc wipe so a
 	// custom/registry CA is trusted again before gardener-node-agent pulls its own image.
 	UpdateCACertificatesScriptPath string
+	// ContainerdSetup is the shell snippet that writes the default containerd config and the ExecStart drop-in.
+	ContainerdSetup string
 }
 
 // generateEtcSetupHookScript renders the etc-setup hook that restores the minimum /etc state needed to bring
@@ -217,6 +209,7 @@ func generateEtcSetupHookScript(units []extensionsv1alpha1.Unit) ([]byte, error)
 		LastAppliedOSCFilePath:         nodeagentconfigv1alpha1.LastAppliedOperatingSystemConfigFilePath,
 		LastComputedOSCChangesFilePath: lastComputedOSCChangesFilePath,
 		UpdateCACertificatesScriptPath: rootcertificates.PathUpdateLocalCACertificates,
+		ContainerdSetup:                string(scriptContentContainerd),
 	}); err != nil {
 		return nil, fmt.Errorf("failed rendering etc-setup hook script: %w", err)
 	}
