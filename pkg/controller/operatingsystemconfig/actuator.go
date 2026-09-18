@@ -90,7 +90,6 @@ chmod 0644 /etc/systemd/system/containerd.service.d/11-exec_config.conf
 ` + writeUnitsToDiskScript + `
 grep -sq "^nfsd$" /etc/modules || echo "nfsd" >>/etc/modules
 modprobe nfsd
-nslookup $(hostname) || systemctl restart systemd-networkd
 
 systemctl daemon-reload
 systemctl enable containerd && systemctl restart containerd
