@@ -217,6 +217,7 @@ require (
 	k8s.io/apiserver v0.36.4 // indirect
 	k8s.io/autoscaler/vertical-pod-autoscaler v1.7.1 // indirect
 	k8s.io/client-go v0.36.4 // indirect
+	k8s.io/cluster-bootstrap v0.36.4 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-aggregator v0.36.4 // indirect
 	k8s.io/kube-openapi v0.0.0-20260603220949-865597e52e25 // indirect
