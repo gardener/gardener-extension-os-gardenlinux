@@ -24,9 +24,10 @@
 # removed at the end.
 
 ### -------IMPORTANT NOTE-------
-# This script is supposed to mimic the behavior of gardener-node-init, which is run on a fresh node. It is therefore
-# important that this script is kept in sync with gardener-node-init
-# https://github.com/gardener/gardener/blob/release-v1.150/pkg/component/extensions/operatingsystemconfig/nodeinit/templates/scripts/init.tpl.sh
+# This script should keep close alignment with the behavior of gardener-node-init, as any step taken there to start GNA
+# must be mirrored here to ensure the agent can start correctly after the /etc wipe. For example, setting up the CA trust.
+#
+# https://github.com/gardener/gardener/blob/master/pkg/component/extensions/operatingsystemconfig/nodeinit/templates/scripts/init.tpl.sh
 
 set -o errexit
 set -o nounset
@@ -67,12 +68,11 @@ fi
 # would rebuild trust - a chicken-and-egg deadlock. We therefore rebuild trust here, up front.
 #
 # Best-effort: must never abort the hook (which would leave gardener-node-agent un-started), so failures are only logged.
-UPDATE_CA_SCRIPT="{{ .UpdateCACertificatesScriptPath }}"
 restore_ca_trust() {
-  if [ -x "${UPDATE_CA_SCRIPT}" ]; then
-    "${UPDATE_CA_SCRIPT}"
+  if [ -x "{{ .UpdateCACertificatesScriptPath }}" ]; then
+    "{{ .UpdateCACertificatesScriptPath }}"
   else
-    echo "WARNING: ${UPDATE_CA_SCRIPT} not found; the OS system trust store cannot be rebuilt from surviving /var CA sources" >&2
+    echo "WARNING: {{ .UpdateCACertificatesScriptPath }} not found; the OS system trust store cannot be rebuilt from surviving /var CA sources" >&2
     return 1
   fi
 }
@@ -93,9 +93,7 @@ fi
 # The unit name and content are taken from the OperatingSystemConfig / gardener core constants, so they stay in
 # sync with gardener automatically.
 mkdir -p /etc/systemd/system
-cat << EOF | base64 -d > "/etc/systemd/system/{{ .NodeAgentUnitName }}"
-{{ .NodeAgentUnitContentB64 }}
-EOF
+{{ .WriteNodeAgentUnit }}
 chmod 0644 /etc/systemd/system/{{ .NodeAgentUnitName }}
 
 systemctl daemon-reload

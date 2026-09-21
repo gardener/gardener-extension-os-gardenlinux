@@ -8,9 +8,9 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"encoding/base64"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"text/template"
 
 	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig"
@@ -163,8 +163,9 @@ const lastComputedOSCChangesFilePath = nodeagentconfigv1alpha1.BaseDir + "/last-
 type etcSetupHookData struct {
 	// NodeAgentUnitName is the systemd unit name of gardener-node-agent (bound to gardener core's exported constant).
 	NodeAgentUnitName string
-	// NodeAgentUnitContentB64 is the base64-encoded content of the gardener-node-agent systemd unit.
-	NodeAgentUnitContentB64 string
+	// WriteNodeAgentUnit is a bash snippet (from UnitsToDiskScript) that writes the gardener-node-agent
+	// systemd unit file to /etc/systemd/system.
+	WriteNodeAgentUnit string
 	// NodeAgentBinaryPath is the on-disk path of the gardener-node-agent binary (under /opt, survives the /etc wipe).
 	// The hook verifies it exists and is executable before starting the unit so a missing binary fails loudly instead
 	// of a silently crash-looping unit.
@@ -189,21 +190,17 @@ type etcSetupHookData struct {
 // It mirrors what gardener-node-init does on a fresh node (write and start the gardener-node-agent unit, plus a
 // minimal containerd config so containerd can start).
 func generateEtcSetupHookScript(units []extensionsv1alpha1.Unit) ([]byte, error) {
-	var nodeAgentUnitContent string
-	for _, u := range units {
-		if u.Name == nodeagentconfigv1alpha1.UnitName && u.Content != nil {
-			nodeAgentUnitContent = *u.Content
-			break
-		}
-	}
-	if nodeAgentUnitContent == "" {
+	gnaUnitIndex := slices.IndexFunc(units, func(unit extensionsv1alpha1.Unit) bool {
+		return unit.Name == nodeagentconfigv1alpha1.UnitName && unit.Content != nil
+	})
+	if gnaUnitIndex == -1 {
 		return nil, fmt.Errorf("OperatingSystemConfig does not contain the %q unit with content, cannot generate etc-setup hook", nodeagentconfigv1alpha1.UnitName)
 	}
 
 	var buf bytes.Buffer
 	if err := etcSetupHookTpl.Execute(&buf, etcSetupHookData{
 		NodeAgentUnitName:              nodeagentconfigv1alpha1.UnitName,
-		NodeAgentUnitContentB64:        base64.StdEncoding.EncodeToString([]byte(nodeAgentUnitContent)),
+		WriteNodeAgentUnit:             operatingsystemconfig.UnitsToDiskScript([]extensionsv1alpha1.Unit{units[gnaUnitIndex]}),
 		NodeAgentBinaryPath:            nodeagentcomponent.PathBinary,
 		NodeAgentConfigDir:             nodeagentconfigv1alpha1.BaseDir,
 		LastAppliedOSCFilePath:         nodeagentconfigv1alpha1.LastAppliedOperatingSystemConfigFilePath,
