@@ -5,13 +5,19 @@
 package operatingsystemconfig
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
 	"path/filepath"
+	"slices"
+	"text/template"
 
 	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig"
+	nodeagentconfigv1alpha1 "github.com/gardener/gardener/pkg/apis/config/nodeagent/v1alpha1"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
+	nodeagentcomponent "github.com/gardener/gardener/pkg/component/extensions/operatingsystemconfig/original/components/nodeagent"
+	"github.com/gardener/gardener/pkg/component/extensions/operatingsystemconfig/original/components/rootcertificates"
 	"github.com/gardener/gardener/pkg/utils"
 	versionutils "github.com/gardener/gardener/pkg/utils/version"
 	"github.com/go-logr/logr"
@@ -41,7 +47,10 @@ func (a *actuator) Reconcile(ctx context.Context, _ logr.Logger, osc *extensions
 		return []byte(userData), nil, nil, nil, err
 
 	case extensionsv1alpha1.OperatingSystemConfigPurposeReconcile:
-		extensionUnits, extensionFiles, inPlaceUpdates := a.handleReconcileOSC(osc)
+		extensionUnits, extensionFiles, inPlaceUpdates, err := a.handleReconcileOSC(osc)
+		if err != nil {
+			return nil, nil, nil, nil, err
+		}
 		return nil, extensionUnits, extensionFiles, inPlaceUpdates, nil
 
 	default:
@@ -72,21 +81,7 @@ func (a *actuator) handleProvisionOSC(ctx context.Context, osc *extensionsv1alph
 	}
 	writeUnitsToDiskScript := operatingsystemconfig.UnitsToDiskScript(osc.Spec.Units)
 
-	script := `#!/bin/bash
-if [ ! -s /etc/containerd/config.toml ]; then
-  mkdir -p /etc/containerd/
-  containerd config default > /etc/containerd/config.toml
-  chmod 0644 /etc/containerd/config.toml
-fi
-
-mkdir -p /etc/systemd/system/containerd.service.d
-cat <<EOF > /etc/systemd/system/containerd.service.d/11-exec_config.conf
-[Service]
-ExecStart=
-ExecStart=/usr/bin/containerd --config=/etc/containerd/config.toml
-EOF
-chmod 0644 /etc/systemd/system/containerd.service.d/11-exec_config.conf
-` + writeFilesToDiskScript + `
+	script := "#!/bin/bash\n" + string(scriptContentContainerd) + writeFilesToDiskScript + `
 ` + writeUnitsToDiskScript + `
 grep -sq "^nfsd$" /etc/modules || echo "nfsd" >>/etc/modules
 modprobe nfsd
@@ -138,16 +133,86 @@ Content-Type: text/x-shellscript
 	return out, nil
 }
 
-var scriptContentInPlaceUpdate []byte
+var (
+	scriptContentInPlaceUpdate []byte
+	scriptContentContainerd    []byte
+	etcSetupHookTpl            *template.Template
+)
 
 func init() {
 	var err error
 
 	scriptContentInPlaceUpdate, err = gardenlinux.Templates.ReadFile(filepath.Join("scripts", "inplace-update.sh"))
 	utilruntime.Must(err)
+
+	scriptContentContainerd, err = gardenlinux.Templates.ReadFile(filepath.Join("scripts", "containerd-setup.sh"))
+	utilruntime.Must(err)
+
+	hookTplContent, err := gardenlinux.Templates.ReadFile(filepath.Join("scripts", "etc-setup-hook.tpl.sh"))
+	utilruntime.Must(err)
+	etcSetupHookTpl = template.Must(template.New("etc-setup-hook").Parse(string(hookTplContent)))
 }
 
-func (a *actuator) handleReconcileOSC(osc *extensionsv1alpha1.OperatingSystemConfig) ([]extensionsv1alpha1.Unit, []extensionsv1alpha1.File, *extensionsv1alpha1.InPlaceUpdatesStatus) {
+// lastComputedOSCChangesFilePath is the path of gardener-node-agent's computed-changes state file.
+
+// TODO(acumino): Use the exported constant from gardener-node-agent once it is available in future gardener releaases.
+const lastComputedOSCChangesFilePath = nodeagentconfigv1alpha1.BaseDir + "/last-computed-osc-changes.yaml"
+
+// etcSetupHookData is the typed template data passed to etcSetupHookTpl.
+type etcSetupHookData struct {
+	// NodeAgentUnitName is the systemd unit name of gardener-node-agent (bound to gardener core's exported constant).
+	NodeAgentUnitName string
+	// WriteNodeAgentUnit is a bash snippet (from UnitsToDiskScript) that writes the gardener-node-agent
+	// systemd unit file to /etc/systemd/system.
+	WriteNodeAgentUnit string
+	// NodeAgentBinaryPath is the on-disk path of the gardener-node-agent binary (under /opt, survives the /etc wipe).
+	// The hook verifies it exists and is executable before starting the unit so a missing binary fails loudly instead
+	// of a silently crash-looping unit.
+	NodeAgentBinaryPath string
+	// NodeAgentConfigDir is gardener-node-agent's --config-dir (its BaseDir, under /var/lib, survives the /etc wipe).
+	// The hook verifies the config file is present there before starting the unit.
+	NodeAgentConfigDir string
+	// LastAppliedOSCFilePath and LastComputedOSCChangesFilePath are gardener-node-agent's state files. The hook removes
+	// both so that gardener-node-agent recomputes and re-applies the full OperatingSystemConfig onto the wiped /etc.
+	LastAppliedOSCFilePath         string
+	LastComputedOSCChangesFilePath string
+	// UpdateCACertificatesScriptPath is the path of the script that rebuilds the OS system trust store from the CA
+	// sources under /var (bound to gardener core's exported constant). The hook re-runs it after the /etc wipe so a
+	// custom/registry CA is trusted again before gardener-node-agent pulls its own image.
+	UpdateCACertificatesScriptPath string
+	// ContainerdSetup is the shell snippet that writes the default containerd config and the ExecStart drop-in.
+	ContainerdSetup string
+}
+
+// generateEtcSetupHookScript renders the etc-setup hook that restores the minimum /etc state needed to bring
+// gardener-node-agent back up after the GardenLinux /etc overlay is wiped during a wipe-based in-place OS upgrade.
+// It mirrors what gardener-node-init does on a fresh node (write and start the gardener-node-agent unit, plus a
+// minimal containerd config so containerd can start).
+func generateEtcSetupHookScript(units []extensionsv1alpha1.Unit) ([]byte, error) {
+	gnaUnitIndex := slices.IndexFunc(units, func(unit extensionsv1alpha1.Unit) bool {
+		return unit.Name == nodeagentconfigv1alpha1.UnitName && unit.Content != nil
+	})
+	if gnaUnitIndex == -1 {
+		return nil, fmt.Errorf("OperatingSystemConfig does not contain the %q unit with content, cannot generate etc-setup hook", nodeagentconfigv1alpha1.UnitName)
+	}
+
+	var buf bytes.Buffer
+	if err := etcSetupHookTpl.Execute(&buf, etcSetupHookData{
+		NodeAgentUnitName:              nodeagentconfigv1alpha1.UnitName,
+		WriteNodeAgentUnit:             operatingsystemconfig.UnitsToDiskScript([]extensionsv1alpha1.Unit{units[gnaUnitIndex]}),
+		NodeAgentBinaryPath:            nodeagentcomponent.PathBinary,
+		NodeAgentConfigDir:             nodeagentconfigv1alpha1.BaseDir,
+		LastAppliedOSCFilePath:         nodeagentconfigv1alpha1.LastAppliedOperatingSystemConfigFilePath,
+		LastComputedOSCChangesFilePath: lastComputedOSCChangesFilePath,
+		UpdateCACertificatesScriptPath: rootcertificates.PathUpdateLocalCACertificates,
+		ContainerdSetup:                string(scriptContentContainerd),
+	}); err != nil {
+		return nil, fmt.Errorf("failed rendering etc-setup hook script: %w", err)
+	}
+	return buf.Bytes(), nil
+}
+
+func (a *actuator) handleReconcileOSC(osc *extensionsv1alpha1.OperatingSystemConfig) ([]extensionsv1alpha1.Unit, []extensionsv1alpha1.File, *extensionsv1alpha1.InPlaceUpdatesStatus, error) {
 	var (
 		extensionUnits []extensionsv1alpha1.Unit
 		extensionFiles []extensionsv1alpha1.File
@@ -181,6 +246,21 @@ LimitNOFILE=1048576`,
 			Permissions: &gardenlinux.ScriptPermissions,
 		})
 
+		hookScript, err := generateEtcSetupHookScript(osc.Spec.Units)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		extensionFiles = append(extensionFiles, extensionsv1alpha1.File{
+			Path: gardenlinux.PathEtcSetupHook,
+			Content: extensionsv1alpha1.FileContent{
+				Inline: &extensionsv1alpha1.FileContentInline{
+					Data:     utils.EncodeBase64(hookScript),
+					Encoding: "b64",
+				},
+			},
+			Permissions: &gardenlinux.ScriptPermissions,
+		})
+
 		inPlaceUpdates = &extensionsv1alpha1.InPlaceUpdatesStatus{
 			OSUpdate: &extensionsv1alpha1.OSUpdate{
 				Command: filePathOSUpdateScript,
@@ -189,5 +269,5 @@ LimitNOFILE=1048576`,
 		}
 	}
 
-	return extensionUnits, extensionFiles, inPlaceUpdates
+	return extensionUnits, extensionFiles, inPlaceUpdates, nil
 }
