@@ -5,8 +5,8 @@ go 1.26.5
 require (
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/gardener/gardener v1.152.0
-	github.com/gardener/gardener/hack/tools v1.151.1
-	github.com/gardener/gardener/pkg/apis v1.151.1
+	github.com/gardener/gardener/hack/tools v1.152.0
+	github.com/gardener/gardener/pkg/apis v1.152.0
 	github.com/go-logr/logr v1.4.4
 	github.com/onsi/ginkgo/v2 v2.33.0
 	github.com/onsi/gomega v1.43.0
