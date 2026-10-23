@@ -38,6 +38,7 @@ jobs:
         run: |
           set -euo pipefail
           export PATH="${PATH}:$(go env GOROOT)/bin"
+          make tidy
           make generate MODE=sequential
       - name: Capture changes
         id: diff
