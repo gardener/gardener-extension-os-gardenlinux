@@ -12,6 +12,7 @@ on:
 jobs:
   build:
     uses: ./.github/workflows/build.yaml
+    environment: release
     secrets: inherit
     permissions:
       contents: read
@@ -24,6 +25,7 @@ jobs:
     uses: gardener/cc-utils/.github/workflows/release.yaml@v1
     needs:
       - build
+    environment: release
     secrets: inherit
     permissions:
       contents: write
