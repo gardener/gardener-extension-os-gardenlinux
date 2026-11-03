@@ -10,9 +10,15 @@ on:
 
 
 jobs:
-  build:
-    uses: ./.github/workflows/build.yaml
+  gate:
+    runs-on: ubuntu-latest
     environment: release
+    steps:
+      - run: echo "approved"
+
+  build:
+    needs: gate
+    uses: ./.github/workflows/build.yaml
     secrets: inherit
     permissions:
       contents: read
@@ -24,8 +30,8 @@ jobs:
   release-to-github-and-bump:
     uses: gardener/cc-utils/.github/workflows/release.yaml@v1
     needs:
+      - gate
       - build
-    environment: release
     secrets: inherit
     permissions:
       contents: write
