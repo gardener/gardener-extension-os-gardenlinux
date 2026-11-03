@@ -15,6 +15,7 @@ jobs:
     environment: release
     steps:
       - run: echo "approved"
+    permissions: {}
 
   build:
     needs: gate
