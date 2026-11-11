@@ -243,7 +243,7 @@ LimitNOFILE=1048576`,
 					Encoding: "b64",
 				},
 			},
-			Permissions: &gardenlinux.ScriptPermissions,
+			Permissions: new(gardenlinux.ScriptPermissions),
 		})
 
 		hookScript, err := generateEtcSetupHookScript(osc.Spec.Units)
@@ -258,7 +258,7 @@ LimitNOFILE=1048576`,
 					Encoding: "b64",
 				},
 			},
-			Permissions: &gardenlinux.ScriptPermissions,
+			Permissions: new(gardenlinux.ScriptPermissions),
 		})
 
 		inPlaceUpdates = &extensionsv1alpha1.InPlaceUpdatesStatus{
