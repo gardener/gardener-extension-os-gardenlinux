@@ -279,7 +279,7 @@ Content-Type: text/x-shellscript
 					for _, f := range files {
 						if f.Path == gardenlinux.PathEtcSetupHook {
 							Expect(f.Permissions).NotTo(BeNil())
-							Expect(*f.Permissions).To(Equal(uint32(0755)))
+							Expect(*f.Permissions).To(Equal(int32(0755)))
 							return
 						}
 					}
