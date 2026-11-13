@@ -26,6 +26,11 @@ const (
 	// must be installed with executable permissions.
 	PathEtcSetupHook = "/var/lib/gardenlinux/etc-setup-hooks/00-gardener"
 
+	// PathRestrictTrustBundle is the path of the script that restricts the node's CA trust store to
+	// the gardener-delivered bundles by deactivating distro-shipped CAs. Rendered and delivered when
+	// the operating-system config requests a strict (replace-distro) trust bundle.
+	PathRestrictTrustBundle = ScriptLocation + "/restrict-trust-bundle.sh"
+
 	// OSTypeGardenLinux is a constant for the Garden Linux extension OS type.
 	OSTypeGardenLinux = "gardenlinux"
 
