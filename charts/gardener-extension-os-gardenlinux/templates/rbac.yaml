@@ -32,7 +32,6 @@ rules:
   - ""
   resources:
   - secrets
-  - secrets/finalizers
   verbs:
   - create
   - delete
