@@ -287,10 +287,10 @@ Content-Type: text/x-shellscript
 				})
 			})
 
-			It("should add one empty additional unit for containerd", func() {
+			It("should add one empty additional unit for containerd and the restrict-trust-bundle unit", func() {
 				_, units, files, _, err := actuator.Reconcile(ctx, log, osc)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(units).To(HaveLen(1))
+				Expect(units).To(HaveLen(2))
 				Expect(units).To(ContainElement(
 					extensionsv1alpha1.Unit{
 						Name: "containerd.service",
@@ -304,7 +304,37 @@ LimitNOFILE=1048576`,
 						},
 					},
 				))
-				Expect(files).To(BeEmpty())
+
+				var restrictUnit *extensionsv1alpha1.Unit
+				for i := range units {
+					if units[i].Name == "restrict-trust-bundle.service" {
+						restrictUnit = &units[i]
+						break
+					}
+				}
+				Expect(restrictUnit).NotTo(BeNil())
+				Expect(restrictUnit.Command).To(Equal(ptr.To(extensionsv1alpha1.CommandStart)))
+				Expect(restrictUnit.Content).NotTo(BeNil())
+				Expect(*restrictUnit.Content).To(ContainSubstring("After=updatecacerts.service"))
+				Expect(*restrictUnit.Content).To(ContainSubstring("ExecStart=" + gardenlinux.PathRestrictTrustBundle))
+				Expect(restrictUnit.FilePaths).To(ContainElement(gardenlinux.PathRestrictTrustBundle))
+
+				var scriptFile *extensionsv1alpha1.File
+				for i := range files {
+					if files[i].Path == gardenlinux.PathRestrictTrustBundle {
+						scriptFile = &files[i]
+						break
+					}
+				}
+				Expect(scriptFile).NotTo(BeNil())
+				Expect(scriptFile.Permissions).NotTo(BeNil())
+				Expect(*scriptFile.Permissions).To(Equal(int32(0755)))
+				Expect(scriptFile.Content.Inline).NotTo(BeNil())
+				Expect(scriptFile.Content.Inline.Encoding).To(Equal("b64"))
+				decoded, err := base64.StdEncoding.DecodeString(scriptFile.Content.Inline.Data)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(decoded)).To(ContainSubstring("/etc/ca-certificates.conf"))
+				Expect(string(decoded)).To(ContainSubstring("update-ca-certificates --fresh --localcertsdir /var/lib/ca-certificates-local"))
 			})
 		})
 	})
