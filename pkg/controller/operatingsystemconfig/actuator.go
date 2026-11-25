@@ -84,7 +84,7 @@ func (a *actuator) handleProvisionOSC(ctx context.Context, osc *extensionsv1alph
 	script := "#!/bin/bash\n" + string(scriptContentContainerd) + writeFilesToDiskScript + `
 ` + writeUnitsToDiskScript + `
 grep -sq "^nfsd$" /etc/modules || echo "nfsd" >>/etc/modules
-modprobe nfsd
+modprobe nfsd || echo "failed to load nfsd module"
 
 systemctl daemon-reload
 systemctl enable containerd && systemctl restart containerd
