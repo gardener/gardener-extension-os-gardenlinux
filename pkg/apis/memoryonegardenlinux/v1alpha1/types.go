@@ -21,4 +21,7 @@ type OperatingSystemConfiguration struct {
 	// SystemMemory allows to configure the `system_memory` parameter. If not present, it will default to `6x`.
 	// +optional
 	SystemMemory *string `json:"systemMemory,omitempty"`
+	// VsmpConfiguration allows to configure any setting of vSMP
+	// +optional
+	VsmpConfiguration map[string]string `json:"vsmpConfiguration,omitempty"`
 }

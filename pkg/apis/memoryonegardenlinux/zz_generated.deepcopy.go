@@ -27,6 +27,13 @@ func (in *OperatingSystemConfiguration) DeepCopyInto(out *OperatingSystemConfigu
 		*out = new(string)
 		**out = **in
 	}
+	if in.VsmpConfiguration != nil {
+		in, out := &in.VsmpConfiguration, &out.VsmpConfiguration
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 

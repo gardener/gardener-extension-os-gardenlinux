@@ -7,6 +7,10 @@ package operatingsystemconfig_test
 import (
 	"context"
 	"encoding/base64"
+	"io"
+	"mime"
+	"mime/multipart"
+	"strings"
 
 	"github.com/gardener/gardener/extensions/pkg/controller/operatingsystemconfig"
 	nodeagentconfigv1alpha1 "github.com/gardener/gardener/pkg/apis/config/nodeagent/v1alpha1"
@@ -17,16 +21,28 @@ import (
 	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	runtimeutils "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	memoryonegardenlinuxv1alpha1 "github.com/gardener/gardener-extension-os-gardenlinux/pkg/apis/memoryonegardenlinux/v1alpha1"
 	. "github.com/gardener/gardener-extension-os-gardenlinux/pkg/controller/operatingsystemconfig"
 	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/gardenlinux"
 	"github.com/gardener/gardener-extension-os-gardenlinux/pkg/memoryone"
 )
+
+var codec runtime.Codec
+
+func init() {
+	scheme := runtime.NewScheme()
+	runtimeutils.Must(memoryonegardenlinuxv1alpha1.AddToScheme(scheme))
+	codec = serializer.NewCodecFactory(scheme, serializer.EnableStrict).LegacyCodec(memoryonegardenlinuxv1alpha1.SchemeGroupVersion)
+}
 
 var _ = Describe("Actuator", func() {
 	var (
@@ -115,29 +131,171 @@ touch /var/lib/osc/provision-osc-applied
 		)
 
 		When("OS type is 'memoryone-gardenlinux'", func() {
+			var memoryOneConfiguration memoryonegardenlinuxv1alpha1.OperatingSystemConfiguration
+
 			BeforeEach(func() {
+				memoryOneConfiguration = memoryonegardenlinuxv1alpha1.OperatingSystemConfiguration{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "memoryone-gardenlinux.os.extensions.gardener.cloud/v1alpha1",
+						Kind:       "OperatingSystemConfiguration",
+					},
+				}
+
 				osc.Spec.Type = memoryone.OSTypeMemoryOneGardenLinux
-				osc.Spec.ProviderConfig = &runtime.RawExtension{Raw: []byte(`apiVersion: memoryone-gardenlinux.os.extensions.gardener.cloud/v1alpha1
-kind: OperatingSystemConfiguration
-memoryTopology: "2"
-systemMemory: "6x"`)}
 			})
 
-			Describe("#Reconcile", func() {
-				It("should not return an error", func() {
+			When("Legacy fields are used", func() {
+				It("should use default values for the system_memory and mem_topology", func() {
+					osc.Spec.ProviderConfig = nil
+
 					userData, extensionUnits, extensionFiles, inplaceUpdateStatus, err := actuator.Reconcile(ctx, log, osc)
 					Expect(err).NotTo(HaveOccurred())
 
-					Expect(string(userData)).To(Equal(`Content-Type: multipart/mixed; boundary="==BOUNDARY=="
-MIME-Version: 1.0
---==BOUNDARY==
-Content-Type: text/x-vsmp; section=vsmp
-system_memory=6x
-mem_topology=2
---==BOUNDARY==
-Content-Type: text/x-shellscript
-` + expectedUserData + `
---==BOUNDARY==`))
+					vSmpConfig, decodedUserData := decodeVsmpUserData(string(userData))
+
+					Expect(vSmpConfig).To(BeEquivalentTo(map[string]string{
+						"mem_topology":  "2",
+						"system_memory": "6x",
+					}))
+					Expect(decodedUserData).To(Equal(expectedUserData))
+					Expect(extensionUnits).To(BeEmpty())
+					Expect(extensionFiles).To(BeEmpty())
+					Expect(inplaceUpdateStatus).To(BeNil())
+				})
+
+				It("should use custom values for system_memory and mem_topology", func() {
+					memoryOneConfiguration.MemoryTopology = ptr.To("4")
+					memoryOneConfiguration.SystemMemory = ptr.To("8x")
+					Expect(encodeMemoryOneConfigurationIntoOsc(codec, osc, &memoryOneConfiguration)).To(Succeed())
+
+					userData, extensionUnits, extensionFiles, inplaceUpdateStatus, err := actuator.Reconcile(ctx, log, osc)
+					Expect(err).NotTo(HaveOccurred())
+
+					vSmpConfig, decodedUserData := decodeVsmpUserData(string(userData))
+
+					Expect(vSmpConfig).To(BeEquivalentTo(map[string]string{
+						"mem_topology":  "4",
+						"system_memory": "8x",
+					}))
+					Expect(decodedUserData).To(Equal(expectedUserData))
+					Expect(extensionUnits).To(BeEmpty())
+					Expect(extensionFiles).To(BeEmpty())
+					Expect(inplaceUpdateStatus).To(BeNil())
+				})
+
+				It("should allow injecting additional key-value pairs by semicola", func() {
+					memoryOneConfiguration.MemoryTopology = ptr.To("4; foo=bar")
+					memoryOneConfiguration.SystemMemory = ptr.To("8x")
+					Expect(encodeMemoryOneConfigurationIntoOsc(codec, osc, &memoryOneConfiguration)).To(Succeed())
+
+					userData, extensionUnits, extensionFiles, inplaceUpdateStatus, err := actuator.Reconcile(ctx, log, osc)
+					Expect(err).NotTo(HaveOccurred())
+
+					vSmpConfig, decodedUserData := decodeVsmpUserData(string(userData))
+
+					Expect(vSmpConfig).To(BeEquivalentTo(map[string]string{
+						"mem_topology":  "4; foo=bar",
+						"system_memory": "8x",
+					}))
+					Expect(decodedUserData).To(Equal(expectedUserData))
+					Expect(extensionUnits).To(BeEmpty())
+					Expect(extensionFiles).To(BeEmpty())
+					Expect(inplaceUpdateStatus).To(BeNil())
+				})
+			})
+
+			When("MemoryOne configuration map is used", func() {
+				It("Should include arbitrary configuration values in vSMP config", func() {
+					memoryOneConfiguration.VsmpConfiguration = map[string]string{
+						"foo": "bar",
+						"abc": "xyz",
+					}
+					Expect(encodeMemoryOneConfigurationIntoOsc(codec, osc, &memoryOneConfiguration)).To(Succeed())
+
+					userData, extensionUnits, extensionFiles, inplaceUpdateStatus, err := actuator.Reconcile(ctx, log, osc)
+					Expect(err).NotTo(HaveOccurred())
+
+					vSmpConfig, decodedUserData := decodeVsmpUserData(string(userData))
+
+					Expect(vSmpConfig).To(BeEquivalentTo(map[string]string{
+						"mem_topology":  "2",
+						"system_memory": "6x",
+						"foo":           "bar",
+						"abc":           "xyz",
+					}))
+					Expect(decodedUserData).To(Equal(expectedUserData))
+					Expect(extensionUnits).To(BeEmpty())
+					Expect(extensionFiles).To(BeEmpty())
+					Expect(inplaceUpdateStatus).To(BeNil())
+				})
+
+				It("Should not allow injecting additional key-value pairs by semicola", func() {
+					memoryOneConfiguration.VsmpConfiguration = map[string]string{
+						"foo":        "bar; foobar: barfoo",
+						"newlinefoo": "bar\nwith\nnew\nline",
+						"abc":        "xyz",
+					}
+					Expect(encodeMemoryOneConfigurationIntoOsc(codec, osc, &memoryOneConfiguration)).To(Succeed())
+
+					userData, extensionUnits, extensionFiles, inplaceUpdateStatus, err := actuator.Reconcile(ctx, log, osc)
+					Expect(err).NotTo(HaveOccurred())
+
+					vSmpConfig, decodedUserData := decodeVsmpUserData(string(userData))
+
+					Expect(vSmpConfig).To(BeEquivalentTo(map[string]string{
+						"mem_topology":  "2",
+						"system_memory": "6x",
+						"foo":           "bar",
+						"newlinefoo":    "bar",
+						"abc":           "xyz",
+					}))
+					Expect(decodedUserData).To(Equal(expectedUserData))
+					Expect(extensionUnits).To(BeEmpty())
+					Expect(extensionFiles).To(BeEmpty())
+					Expect(inplaceUpdateStatus).To(BeNil())
+				})
+
+				It("Should allow quoted values", func() {
+					memoryOneConfiguration.VsmpConfiguration = map[string]string{
+						"quoted": "\"12:34:56:78:90:ab:cd:ef\"",
+					}
+					Expect(encodeMemoryOneConfigurationIntoOsc(codec, osc, &memoryOneConfiguration)).To(Succeed())
+
+					userData, extensionUnits, extensionFiles, inplaceUpdateStatus, err := actuator.Reconcile(ctx, log, osc)
+					Expect(err).NotTo(HaveOccurred())
+
+					vSmpConfig, decodedUserData := decodeVsmpUserData(string(userData))
+
+					Expect(vSmpConfig).To(BeEquivalentTo(map[string]string{
+						"mem_topology":  "2",
+						"system_memory": "6x",
+						"quoted":        "\"12:34:56:78:90:ab:cd:ef\"",
+					}))
+					Expect(decodedUserData).To(Equal(expectedUserData))
+					Expect(extensionUnits).To(BeEmpty())
+					Expect(extensionFiles).To(BeEmpty())
+					Expect(inplaceUpdateStatus).To(BeNil())
+				})
+
+				It("Should give priority to legacy values", func() {
+					memoryOneConfiguration.MemoryTopology = ptr.To("3")
+					memoryOneConfiguration.SystemMemory = ptr.To("7x")
+					memoryOneConfiguration.VsmpConfiguration = map[string]string{
+						"mem_topology":  "5",
+						"system_memory": "13x",
+					}
+					Expect(encodeMemoryOneConfigurationIntoOsc(codec, osc, &memoryOneConfiguration)).To(Succeed())
+
+					userData, extensionUnits, extensionFiles, inplaceUpdateStatus, err := actuator.Reconcile(ctx, log, osc)
+					Expect(err).NotTo(HaveOccurred())
+
+					vSmpConfig, decodedUserData := decodeVsmpUserData(string(userData))
+
+					Expect(vSmpConfig).To(BeEquivalentTo(map[string]string{
+						"mem_topology":  "3",
+						"system_memory": "7x",
+					}))
+					Expect(decodedUserData).To(Equal(expectedUserData))
 					Expect(extensionUnits).To(BeEmpty())
 					Expect(extensionFiles).To(BeEmpty())
 					Expect(inplaceUpdateStatus).To(BeNil())
@@ -309,3 +467,94 @@ LimitNOFILE=1048576`,
 		})
 	})
 })
+
+type multiPart struct {
+	contentType string
+	params      map[string]string
+	content     string
+}
+
+func readMimeMultiParts(s string) []multiPart {
+	GinkgoHelper()
+	const (
+		contentTypeIdentifier = "Content-Type"
+		boundary              = "==BOUNDARY=="
+	)
+
+	var parts []multiPart
+
+	mr := multipart.NewReader(strings.NewReader(s), boundary)
+	for {
+		p, err := mr.NextPart()
+		if err == io.EOF {
+			break
+		}
+		Expect(err).ShouldNot(HaveOccurred())
+
+		c, err := io.ReadAll(p)
+		Expect(err).ShouldNot(HaveOccurred())
+
+		mediaType, params, err := mime.ParseMediaType(p.Header.Get(contentTypeIdentifier))
+		Expect(err).ShouldNot(HaveOccurred())
+
+		parts = append(parts, multiPart{
+			contentType: mediaType,
+			params:      params,
+			content:     string(c),
+		})
+	}
+	return parts
+}
+
+func extractVsmpConfiguration(p multiPart) map[string]string {
+	GinkgoHelper()
+	Expect(p.contentType).To(Equal("text/x-vsmp"))
+	Expect(p.params).To(HaveLen(1))
+	Expect(p.params).To(HaveKeyWithValue("section", "vsmp"))
+
+	lines := strings.Split(p.content, "\n")
+
+	config := make(map[string]string, len(lines))
+	for _, line := range lines {
+		if len(line) == 0 {
+			continue
+		}
+		key, value, found := strings.Cut(line, "=")
+		Expect(found).To(BeTrue())
+		config[key] = value
+	}
+
+	return config
+}
+
+func extractUserdata(p multiPart) string {
+	GinkgoHelper()
+	Expect(p.contentType).To(Equal("text/x-shellscript"))
+	Expect(p.params).To(BeEmpty())
+	return p.content
+}
+
+func decodeVsmpUserData(s string) (map[string]string, string) {
+	GinkgoHelper()
+	prefix := `Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+MIME-Version: 1.0`
+
+	Expect(strings.HasPrefix(s, prefix)).To(BeTrue())
+	parts := readMimeMultiParts(s)
+	Expect(parts).To(HaveLen(2))
+	vsmpConfig := extractVsmpConfiguration(parts[0])
+	userData := extractUserdata(parts[1])
+	return vsmpConfig, userData
+}
+
+func encodeMemoryOneConfigurationIntoOsc(codec runtime.Codec, osc *extensionsv1alpha1.OperatingSystemConfig, moc *memoryonegardenlinuxv1alpha1.OperatingSystemConfiguration) error {
+	GinkgoHelper()
+	encoded, err := runtime.Encode(codec, moc)
+	if err != nil {
+		return err
+	}
+	osc.Spec.ProviderConfig = &runtime.RawExtension{
+		Raw: encoded,
+	}
+	return nil
+}

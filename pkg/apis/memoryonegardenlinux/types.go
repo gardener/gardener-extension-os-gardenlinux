@@ -18,4 +18,6 @@ type OperatingSystemConfiguration struct {
 	MemoryTopology *string
 	// SystemMemory allows to configure the `system_memory` parameter. If not present, it will default to `6x`.
 	SystemMemory *string
+	// VsmpConfiguration allows to configure any setting of vSMP
+	VsmpConfiguration map[string]string
 }

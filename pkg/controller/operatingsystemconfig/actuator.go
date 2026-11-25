@@ -104,35 +104,6 @@ systemctl enable containerd && systemctl restart containerd
 	return script, nil
 }
 
-func wrapIntoMemoryOneHeaderAndFooter(osc *extensionsv1alpha1.OperatingSystemConfig, in string) (string, error) {
-	config, err := memoryone.Configuration(osc)
-	if err != nil {
-		return "", err
-	}
-
-	out := `Content-Type: multipart/mixed; boundary="==BOUNDARY=="
-MIME-Version: 1.0
---==BOUNDARY==
-Content-Type: text/x-vsmp; section=vsmp`
-
-	if config != nil && config.SystemMemory != nil {
-		out += fmt.Sprintf(`
-system_memory=%s`, *config.SystemMemory)
-	}
-	if config != nil && config.MemoryTopology != nil {
-		out += fmt.Sprintf(`
-mem_topology=%s`, *config.MemoryTopology)
-	}
-
-	out += `
---==BOUNDARY==
-Content-Type: text/x-shellscript
-` + in + `
---==BOUNDARY==`
-
-	return out, nil
-}
-
 var (
 	scriptContentInPlaceUpdate []byte
 	scriptContentContainerd    []byte

@@ -51,6 +51,18 @@ string
 <p>SystemMemory allows to configure the `system_memory` parameter. If not present, it will default to `6x`.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>vsmpConfiguration</code></br>
+<em>
+object (keys:string, values:string)
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>VsmpConfiguration allows to configure any setting of vSMP</p>
+</td>
+</tr>
 
 </tbody>
 </table>

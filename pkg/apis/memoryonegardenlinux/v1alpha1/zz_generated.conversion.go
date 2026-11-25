@@ -40,6 +40,7 @@ func RegisterConversions(s *runtime.Scheme) error {
 func autoConvert_v1alpha1_OperatingSystemConfiguration_To_memoryonegardenlinux_OperatingSystemConfiguration(in *OperatingSystemConfiguration, out *memoryonegardenlinux.OperatingSystemConfiguration, s conversion.Scope) error {
 	out.MemoryTopology = (*string)(unsafe.Pointer(in.MemoryTopology))
 	out.SystemMemory = (*string)(unsafe.Pointer(in.SystemMemory))
+	out.VsmpConfiguration = *(*map[string]string)(unsafe.Pointer(&in.VsmpConfiguration))
 	return nil
 }
 
@@ -51,6 +52,7 @@ func Convert_v1alpha1_OperatingSystemConfiguration_To_memoryonegardenlinux_Opera
 func autoConvert_memoryonegardenlinux_OperatingSystemConfiguration_To_v1alpha1_OperatingSystemConfiguration(in *memoryonegardenlinux.OperatingSystemConfiguration, out *OperatingSystemConfiguration, s conversion.Scope) error {
 	out.MemoryTopology = (*string)(unsafe.Pointer(in.MemoryTopology))
 	out.SystemMemory = (*string)(unsafe.Pointer(in.SystemMemory))
+	out.VsmpConfiguration = *(*map[string]string)(unsafe.Pointer(&in.VsmpConfiguration))
 	return nil
 }
 
