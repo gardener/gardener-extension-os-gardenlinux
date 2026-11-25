@@ -134,9 +134,10 @@ Content-Type: text/x-shellscript
 }
 
 var (
-	scriptContentInPlaceUpdate []byte
-	scriptContentContainerd    []byte
-	etcSetupHookTpl            *template.Template
+	scriptContentInPlaceUpdate     []byte
+	scriptContentContainerd        []byte
+	scriptContentRestrictTrustBundle []byte
+	etcSetupHookTpl                *template.Template
 )
 
 func init() {
@@ -146,6 +147,9 @@ func init() {
 	utilruntime.Must(err)
 
 	scriptContentContainerd, err = gardenlinux.Templates.ReadFile(filepath.Join("scripts", "containerd-setup.sh"))
+	utilruntime.Must(err)
+
+	scriptContentRestrictTrustBundle, err = gardenlinux.Templates.ReadFile(filepath.Join("scripts", "restrict-trust-bundle.sh"))
 	utilruntime.Must(err)
 
 	hookTplContent, err := gardenlinux.Templates.ReadFile(filepath.Join("scripts", "etc-setup-hook.tpl.sh"))
@@ -268,6 +272,37 @@ LimitNOFILE=1048576`,
 			},
 		}
 	}
+
+	// TODO(ccwienk): Gate on an explicit replace-distrobundle signal from gardener core once the
+	// corresponding field lands on OperatingSystemConfig together with the custom bundle delivery
+	// (planned GEP; mirror of the internal short-term variant). Until then the script and unit are
+	// always delivered but harmless: the unit defaults to disabled and its effect is idempotent.
+	extensionFiles = append(extensionFiles, extensionsv1alpha1.File{
+		Path: gardenlinux.PathRestrictTrustBundle,
+		Content: extensionsv1alpha1.FileContent{
+			Inline: &extensionsv1alpha1.FileContentInline{
+				Data:     utils.EncodeBase64(scriptContentRestrictTrustBundle),
+				Encoding: "b64",
+			},
+		},
+		Permissions: new(gardenlinux.ScriptPermissions),
+	})
+
+	extensionUnits = append(extensionUnits, extensionsv1alpha1.Unit{
+		Name:    "restrict-trust-bundle.service",
+		Command: new(extensionsv1alpha1.CommandStart),
+		Content: new(`[Unit]
+Description=Replace distro trust bundle with gardener-delivered CA set
+# Order after gardener core's updatecacerts.service: the script negates distro entries in
+# /etc/ca-certificates.conf and re-runs update-ca-certificates against /var/lib/ca-certificates-local.
+After=updatecacerts.service
+[Service]
+Type=oneshot
+ExecStart=` + gardenlinux.PathRestrictTrustBundle + `
+[Install]
+WantedBy=multi-user.target`),
+		FilePaths: []string{gardenlinux.PathRestrictTrustBundle},
+	})
 
 	return extensionUnits, extensionFiles, inPlaceUpdates, nil
 }
