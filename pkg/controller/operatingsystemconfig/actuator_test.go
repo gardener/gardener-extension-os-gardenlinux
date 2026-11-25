@@ -88,7 +88,7 @@ cat << EOF | base64 -d > "/etc/systemd/system/some-unit"
 Zm9v
 EOF
 grep -sq "^nfsd$" /etc/modules || echo "nfsd" >>/etc/modules
-modprobe nfsd
+modprobe nfsd || echo "failed to load nfsd module"
 
 systemctl daemon-reload
 systemctl enable containerd && systemctl restart containerd
